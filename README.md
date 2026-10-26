@@ -1,4 +1,5 @@
 # tksociete
+un logiciel pour PME TPME développé exclusivement sous tcl tk pur.
 
 ![module contact](screen/fmcontactbig.jpg)
 
