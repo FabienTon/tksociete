@@ -14,8 +14,7 @@ Ses modules sont :
     Un module COMPTABILITE simple pour connaitre son chiffre d'affaire en temps réel.
 
     # Besoins
-    
-Ce logiciel entièrement codé en tcl utilise :
+    Ce logiciel entièrement codé en tcl utilise :
 
     La bibliothèque TK pour l'interface
     le paquet tix et tktable (depots linux)
@@ -30,6 +29,9 @@ Vous avez la possiblite de modifier le nom de ces logiciels dans les options du 
     Explorateur de fichiers : thunar
     Creation de document pdf a partir de fichier html : wkhtmltopdf
     Editeur html (modification des documents) : seamonkey
+
+    # téléchargement
+    [Télécharger la dernière version au format ZIP](https://github.com/FabienTon/tksociete/releases/latest/download/mon-projet.zip)
 
     # Avantages 
 L'avantage de ce logiciel réside dans sa simplicité d'utilisation et son interraction entre les différents modules.
