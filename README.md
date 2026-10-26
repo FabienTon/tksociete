@@ -31,7 +31,7 @@ Vous avez la possiblite de modifier le nom de ces logiciels dans les options du 
     Editeur html (modification des documents) : seamonkey
 
     # téléchargement
-    [Télécharger la dernière version au format ZIP](https://github.com/FabienTon/tksociete/releases/latest/download/mon-projet.zip)
+    [Télécharger la dernière version au format ZIP](https://github.com/FabienTon/tksociete/releases/latest/download/main.zip)
 
     # Avantages 
 L'avantage de ce logiciel réside dans sa simplicité d'utilisation et son interraction entre les différents modules.
