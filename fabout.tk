@@ -1,0 +1,52 @@
+proc Ab_Form_Main {} {
+if {[winfo exist .n.t11] == 0} {
+pack [frame .n.t11 -bg #101010 -padx 10 -pady 10 ] -fill both -expand 1
+
+
+pack [label .n.t11.sep0 -bg #232323] -fill x ; # Separateur en haut
+pack [frame .n.t11.c] -fill both -expand 1 ; # Frame centrale
+pack [frame .n.t11.c.g -bg #232323 -width 100] -fill both  -expand 1 -side left ; # frame grise a gauche
+pack [frame .n.t11.c.f -bg #520261 -padx 5 -pady 5] -fill both -expand 1 -side left  ; # Frame fenetre centrale
+About_Titre
+About_Interface
+pack [frame .n.t11.c.d -bg #232323 -width 100] -fill both  -expand 1 -side left ; # frame grise a droite
+pack [label .n.t11.sep1 -bg #232323] -fill x ; # separateur en bas
+}
+}
+
+
+# Titre de la fenetre
+proc About_Titre {} {
+pack [frame .n.t11.c.f.fr -bg #520261 -pady 5] -fill x
+pack [label .n.t11.c.f.fr.logo -bg #520261 -image iinfo] -side left -fill both
+pack [label .n.t11.c.f.fr.titre -bg #520261 -fg #FFFFFF -text "A propos de TkSociete..."] -side left -fill both -expand 1
+pack [button .n.t11.c.f.fr.bquit -text "Fermer" -bg #800000 -fg #FFFFFF -command {destroy .n.t11}] -side left
+}
+
+
+# Interface principale
+proc About_Interface {} {
+# Contenu de la fenetre
+pack [label .n.t11.c.f.nom -bg #DFDFDF -font "Bold 35" -text "Tk Societe" -anchor center] -fill x
+pack [label .n.t11.c.f.logo -bg #DFDFDF -image iabout] -fill x
+pack [label .n.t11.c.f.texte -bg #DFDFDF -fg #000000 -text \
+{Un logiciel pour la gestion d'une société
+	Réalisé en Tcl/Tk pur.
+
+Il dispose de plusieurs modules de couleur a la maniere d'intercalaires comme:
+
+- Un module pour la gestion des contacts
+- Un module pour la gestion des affaires
+- Un module pour la gestion d'un stock
+- Un module pour la gestion des interventions SAV
+- Un module pour la gestion des documents et formulaires
+- Un module succinct de comptabilite
+
+Ce logiciel est librement redistribuable
+
+Réalisé par Fabien, début du  projet Aout 2024.
+
+Site du projet: www.tcltk.fr} ] -fill both -expand 1
+}
+
+

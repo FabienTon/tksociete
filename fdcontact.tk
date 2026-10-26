@@ -1,0 +1,256 @@
+# MODULE GESTION DES DETAILS CONTACTS, fait parti du logiciel TKsociété
+# www.tcltk.fr réalisé en aout 2024 par Fabien T.
+# Logiciel librement redistribuable
+
+# ----- Creation Form détail du contact onglet t1 du notebook principal -----
+proc C_Form_Detail { } {
+global Cask;  set bg #232323
+if {[winfo exist .n.t1] eq 1} {destroy .n.t1}
+pack [frame .n.t1 -padx 10 -pady 20 -bg #101010] -fill both -expand 1
+
+# ajout frame grise a gauche
+pack [frame .n.t1.f0 -bg $bg] -fill both -expand 1 -side left
+
+# Ajout frame fenetre principale
+pack [frame .n.t1.fc -bg $bg -bg #47A027 -padx 5 -pady 5] -fill both -expand 1 -side left
+Contact_Detail_Menu
+# ajout frame gauche champs contact
+pack [frame .n.t1.fc.g  -padx 5 -pady 5] -fill both -expand 1 -side left
+Contact_Champs
+# Ajout frame de droite photo contact
+pack [frame .n.t1.fc.d -padx 5 -pady 5] -fill both -side left
+Contact_Photo
+# Ajout frame grise à droite
+pack [frame .n.t1.f3 -bg $bg] -fill both -expand 1 -side right
+# Selection qui demande l'ouverture du formulaire detail contact 0voir, 1Ajout, 2modif
+C_Qui_Demande_Detail
+}
+
+# Remplissage de la variable globale 'Cdetail'
+proc C_Lire_Detail {} {
+global Cdetail
+sqlite3 db1 "./database/contact.dat"
+set idx [lindex $Cdetail 0]
+set sql "SELECT * FROM contact WHERE id = $idx"
+db1 eval $sql { 
+lset Cdetail 1 $societe
+lset Cdetail 2 $nom
+lset Cdetail 3 $prenom
+lset Cdetail 4 $adr1
+lset Cdetail 5 $cp
+lset Cdetail 6 $ville
+lset Cdetail 7 $tel
+lset Cdetail 8 $port
+lset Cdetail 9 $fax
+lset Cdetail 10 $email }
+db1 close
+puts $Cdetail
+}
+
+# Efface tous les champs du contact
+proc C_Efface-Champs {} {
+.n.t1.fc.g.lf0.id configure -text ""
+.n.t1.fc.g.lf1.societe delete 0 end
+.n.t1.fc.g.lf2.nom delete 0 end
+.n.t1.fc.g.lf2.prenom delete 0 end
+.n.t1.fc.g.lf4.adr delete 0 end
+.n.t1.fc.g.lf4.cp delete 0 end
+.n.t1.fc.g.lf4.ville delete 0 end
+.n.t1.fc.g.lf7.tel delete 0 end
+.n.t1.fc.g.lf8.port delete 0 end
+.n.t1.fc.g.lf9.fax delete 0 end
+.n.t1.fc.g.lf10.mail delete 0 end
+}
+
+# Rempli les champs avec le client sélectionné
+proc C_Remplir_Champs {} {
+global Cdetail 
+.n.t1.fc.g.lf0.id configure -text  [lindex $Cdetail 0]
+.n.t1.fc.g.lf1.societe insert 0 [lindex $Cdetail 1]
+.n.t1.fc.g.lf2.nom insert 0 [lindex $Cdetail 2]
+.n.t1.fc.g.lf2.prenom insert 0 [lindex $Cdetail 3]
+.n.t1.fc.g.lf4.adr insert 0 [lindex $Cdetail 4]
+.n.t1.fc.g.lf4.cp insert 0 [lindex $Cdetail 5]
+.n.t1.fc.g.lf4.ville insert 0 [lindex $Cdetail 6]
+.n.t1.fc.g.lf7.tel insert 0 [lindex $Cdetail 7]
+.n.t1.fc.g.lf8.port insert 0 [lindex $Cdetail 8]
+.n.t1.fc.g.lf9.fax insert 0 [lindex $Cdetail 9]
+.n.t1.fc.g.lf10.mail insert 0 [lindex $Cdetail 10]
+}
+
+# Affiche le bouton validation
+proc C_Bouton_Ok {} {
+pack [button .n.t1.fc.m.b2 -text "Valider" -image iselect -compound left -command C_Test_Champ_Vide ] -side right
+}
+
+# Ajouter le contact dont l'id est lindex0 de Cdetail dans la bdd
+proc C_Bdd_Add {} {
+global Cdetail
+lset Cdetail 1 [.n.t1.fc.g.lf1.societe get]
+lset Cdetail 2 [.n.t1.fc.g.lf2.nom get]
+lset Cdetail 3 [.n.t1.fc.g.lf2.prenom get]
+lset Cdetail 4 [.n.t1.fc.g.lf4.adr get]
+lset Cdetail 5 [.n.t1.fc.g.lf4.cp get]
+lset Cdetail 6 [.n.t1.fc.g.lf4.ville get]
+lset Cdetail 7 [.n.t1.fc.g.lf7.tel get]
+lset Cdetail 8 [.n.t1.fc.g.lf8.port get]
+lset Cdetail 9 [.n.t1.fc.g.lf9.fax get]
+lset Cdetail 10 [.n.t1.fc.g.lf10.mail get]
+set a1 [lindex $Cdetail 1]
+set a2 [lindex $Cdetail 2]
+set a3 [lindex $Cdetail 3]
+set a4 [lindex $Cdetail 4]
+set a5 [lindex $Cdetail 5]
+set a6 [lindex $Cdetail 6]
+set a7 [lindex $Cdetail 7]
+set a8 [lindex $Cdetail 8]
+set a9 [lindex $Cdetail 9]
+set a10 [lindex $Cdetail 10]
+sqlite3 db1 "./database/contact.dat"
+db1 eval { INSERT INTO contact ("societe","nom","prenom","adr1","cp","ville","tel","port","fax","email") \
+		VALUES ($a1,$a2,$a3,$a4,$a5,$a6,$a7,$a8,$a9,$a10) }
+db1 close
+tk_messageBox -type ok -icon info -title Warning -message "Nouveau contact créé avec succès !"
+set sql "SELECT * FROM contact"
+C_Refresh_List $sql
+destroy .n.t1
+}
+
+# Modifie le contact dont l'id est lindex0 de Cdetail dans la bdd
+proc C_Bdd_Edit {} {
+global Cdetail script_path
+set myid [lindex $Cdetail 0]
+lset Cdetail 1 [.n.t1.fc.g.lf1.societe get]
+lset Cdetail 2 [.n.t1.fc.g.lf2.nom get]
+lset Cdetail 3 [.n.t1.fc.g.lf2.prenom get]
+lset Cdetail 4 [.n.t1.fc.g.lf4.adr get]
+lset Cdetail 5 [.n.t1.fc.g.lf4.cp get]
+lset Cdetail 6 [.n.t1.fc.g.lf4.ville get]
+lset Cdetail 7 [.n.t1.fc.g.lf7.tel get]
+lset Cdetail 8 [.n.t1.fc.g.lf8.port get]
+lset Cdetail 9 [.n.t1.fc.g.lf9.fax get]
+lset Cdetail 10 [.n.t1.fc.g.lf10.mail get]
+set a1 [lindex $Cdetail 1]; set a2 [lindex $Cdetail 2]
+set a3 [lindex $Cdetail 3]; set a4 [lindex $Cdetail 4]
+set a5 [lindex $Cdetail 5]; set a6 [lindex $Cdetail 6]
+set a7 [lindex $Cdetail 7]; set a8 [lindex $Cdetail 8]
+set a9 [lindex $Cdetail 9]; set a10 [lindex $Cdetail 10]
+set db "/database/contact.dat"
+sqlite3 db1 $script_path$db
+db1 eval { UPDATE contact SET "societe" = $a1,"nom" = $a2,\
+		 "prenom" = $a3, "adr1" = $a4, "cp" = $a5, "ville" = $a6, "tel" = $a7, "port" = $a8, \
+		 "fax" = $a9, "email" = $a10 WHERE "id" = $myid}
+db1 close
+tk_messageBox -type ok -icon info -title Information -message "Contact Modifié avec succès!"
+set marequete "SELECT * FROM contact"
+C_Refresh_List "Select * from contact" ; # mise a jour de la grille dans fmcontact
+destroy .n.t1
+}
+
+# ----- Demande de confirmation Ajout du nouveau contact -----
+proc C_Confirm_Add {} {
+set confirm [tk_messageBox -icon question -type yesno -title "Confirmer la création" -parent . \
+	-message "Confirmez vous la creation\n de ce nouveau contact?"]
+if {$confirm == yes} {C_Bdd_Add}
+}
+
+# ----- Demande de confirmation de modification du contact courant -----
+proc C_Confirm_Edit {} {
+set confirm [tk_messageBox -icon question -type yesno -title "Confirmer la modification" -parent . \
+	-message "Confirmez vous la modification\n de ce nouveau contact?"]
+if {$confirm == yes} {set t [C_Test_Champ] ; if {$t == yes} {C_Bdd_Edit}}
+}
+
+# ----- Demande de confirmation de suppression du contact courant -----
+proc C_Confirm_Del {} {
+global Cdetail
+set myid [lindex $Cdetail 0]
+set confirm [tk_messageBox -icon question -type yesno -title "Confirmer la suppresion" -parent . \
+	-message "Voulez-vous suprrimer\ndéfinitivement le contact numéro $myid ?"]
+if {$confirm == yes} {Contact_Bdd_Del}
+}
+
+# ----- Test si des champs sont vides avant modif de la bdd -----
+proc C_Test_Champ_Vide {} {
+global Cask
+set lasociete [.n.t1.fc.g.lf1.societe get]
+if {$lasociete != ""} {
+		switch $Cask { 
+			1 {C_Confirm_Add}
+			2 {C_Bdd_Edit}
+		}
+	} else {
+	tk_messageBox -type ok -icon error -title "Erreur!" \
+	-message "Le champ société ne peut pas être vide!"	
+
+	}
+}
+
+# ----- Creation du répertoire contact qui contiendra toutes les affaires -----
+proc Contact_Create_Folder {} {
+	
+}
+
+#Menu en haut de la fenetre
+proc Contact_Detail_Menu {} {
+pack [frame .n.t1.fc.m -bg #47A027 -padx 5 -pady 5 ] -fill x  
+pack [label .n.t1.fc.m.pict -bg #47A027 -image i20contact] -side left -fill both
+pack [label .n.t1.fc.m.titre -bg #47A027 -fg #FFFFFF] -side left -fill both -expand 1
+pack [button .n.t1.fc.m.close -text "Fermer" -image i24exit -compound left -command {destroy .n.t1} ] -side right
+}
+
+# Champs contact a gauche de la fenetre
+proc Contact_Champs {} {
+# Ajout des champs client dans la frame de gauche
+pack [labelframe .n.t1.fc.g.lf0 -text "Id client:" -padx 3 -pady 3 ] -fill x -padx 3 -pady 3
+pack [label .n.t1.fc.g.lf0.id -bd 1 -relief solid -bg #F5F7D4] -fill x
+pack [labelframe .n.t1.fc.g.lf1 -text "Société:" -padx 3 -pady 3 ] -fill x -padx 3 -pady 3
+pack [entry .n.t1.fc.g.lf1.societe ] -fill x
+pack [labelframe .n.t1.fc.g.lf2 -text "Nom et prénom:" -padx 3 -pady 3 ] -fill x -padx 3 -pady 3
+pack [entry .n.t1.fc.g.lf2.nom] -fill x  -padx 5
+pack [entry .n.t1.fc.g.lf2.prenom] -fill x -padx 5
+pack [labelframe .n.t1.fc.g.lf4 -text "Adresse, Code postal et ville" -padx 3 -pady 3] -fill x  -padx 3 -pady 3
+pack [entry .n.t1.fc.g.lf4.adr] -fill x
+pack [entry .n.t1.fc.g.lf4.cp  -bd 1 -relief solid] -fill x
+pack [entry .n.t1.fc.g.lf4.ville ] -fill x
+pack [labelframe .n.t1.fc.g.lf7 -text "Tel fixe:" -padx 3 -pady 3]  -fill x -padx 3 -pady 3
+pack [entry .n.t1.fc.g.lf7.tel  ] -fill x 
+pack [labelframe .n.t1.fc.g.lf8 -text "Portable:" -padx 3 -pady 3]   -fill x -padx 3 -pady 3
+pack [entry .n.t1.fc.g.lf8.port  -bd 1 -relief solid] -fill x
+pack [labelframe .n.t1.fc.g.lf9 -text "Fax:" -padx 7 -pady 7]  -fill x -padx 3 -pady 3
+pack [entry .n.t1.fc.g.lf9.fax  ] -fill x
+pack [labelframe .n.t1.fc.g.lf10 -text "Email:" -padx 7 -pady 7]   -fill x -padx 3 -pady 3
+pack [entry .n.t1.fc.g.lf10.mail  ] -fill x 
+}
+
+# Champ photo a droite de la fenetre
+proc Contact_Photo {} {
+pack [labelframe .n.t1.fc.d.lf0 -text "Logo client:" -padx 7 -pady 7] -fill both
+pack [label .n.t1.fc.d.lf0.photo -bg #000000]
+pack [button .n.t1.fc.d.lf0.bcoller -text "coller image" -image ipaste -compound left]
+}
+
+# Qui demande l'ouverture de la form detail des contacs
+proc C_Qui_Demande_Detail {} {
+global Cask Cdetail
+switch $Cask {
+	0 {	global Cdetail
+		set monid [lindex $Cdetail 0]
+		.n.t1.fc.m.titre configure -text "Fiche contact numéro $monid"
+		set p "./contact/"; set ext ".png"
+		set limage $p$monid$ext; set licone [file exist $limage]
+		C_Efface-Champs; C_Remplir_Champs 
+	}
+	
+	1 {	C_Efface-Champs; .n.t1.fc.m.titre configure -text "Ajouter d'un nouveau contact" 
+		focus .n.t1.fc.g.lf1.societe ; C_Bouton_Ok}
+		
+	2 {	global Cdetail
+		set monid [lindex $Cdetail 0]
+		.n.t1.fc.m.titre configure -text "Fiche contact numéro $monid"
+		set p "./contact/"; set ext ".png"
+		set limage $p$monid$ext; set licone [file exist $limage]
+		C_Efface-Champs; C_Remplir_Champs ; C_Bouton_Ok}
+}
+}
+

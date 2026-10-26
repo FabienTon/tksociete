@@ -1,0 +1,121 @@
+# ####################### MODULE AFFAIRE ####################################
+# Ce module permet la gestion des affaires de tk société
+# Une Affaire est un chantier, une intervention SAV, tout travail dont la finalité est un paiment.
+set Areq "SELECT * FROM affaires ORDER BY id"
+
+# Variables globales pour le module contact
+set Adetail [list 0 "Societe" "Nom" "Prenom" "adresse" "cp" "ville" "tel" "port" "fax" "email" "web"] ; # Affaire courante
+set Aask 0 ; # qui demande l'acces à une affaire 0vue, 1ajout 2edition
+
+
+
+# ############################# INTERFACE ##############################
+proc A_Form_Main {} {
+if {[winfo exist .n.t2] == 0} {
+pack [frame .n.t2 -padx 10 -pady 10 -bg #101010] -fill both -expand 1
+A_Main_Menu  ;# Ajout du titre
+pack [frame .n.t2.d -bg #7789C0 -padx 5 -pady 5] -fill both -expand 1
+A_Main_Recherche ; # Ajout de la toolbar avec boite de recherche
+A_Main_Grille ; # Ajout de la grille des affaires
+}
+}
+
+# Frame menu a gauche
+proc A_Main_Menu {} {
+global p
+pack [frame .n.t2.l  -bg  #7789C0 -padx 4 -pady 4] -fill y -side left
+pack [label .n.t2.l.l0 -text "Action sur l'affaire" -fg #FFFFFF -bg #000080] -fill x 
+pack [button .n.t2.l.badd -image iadd -font $p -text "Ajouter" -compound left -command C_Cadd] -fill x
+pack [button .n.t2.l.bedit -image iedit -font $p -text "Modifier" -compound left -command C_Cedit] -fill x
+pack [button .n.t2.l.bdel -image idel -font $p -text "Supprimer" -compound left -command C_Cdel] -fill x
+pack [button .n.t2.l.bdetail -image idetail -font $p -text "Détails" -compound left  -command C_Cdetail] -fill x
+pack [label .n.t2.l.sep0 -bg  #7789C0] -fill x 
+pack [button .n.t2.l.bfolder -image ifolder -font $p -text "Dossier" -compound left  -command C_Dossier] -fill x
+pack [button .n.t2.l.bselect -image iselect -font $p -text "Sélectionner\ncette affaire" -compound left -command C_Cselect] -fill x
+pack [label .n.t2.l.sep1 -bg  #7789C0] -fill x 
+pack [label .n.t2.l.l1 -text "Affaires" -fg #FFFFFF -bg #000080] -fill x 
+pack [button .n.t2.l.bresume -image iresume -font $p -text "Résumé des\n affaires" -compound left -command C_Aresume] -fill x
+pack [label .n.t2.l.sep2 -bg  #7789C0] -fill x 
+pack [label .n.t2.l.l2 -text "Document" -fg #FFFFFF -bg #E06C00] -fill x 
+pack [button .n.t2.l.badddoc -image ifile -font $p -text "Ajouter un\n document" -compound left -command Bcontact_Dajout] -fill x
+pack [label .n.t2.l.sep3 -bg  #7789C0] -fill x 
+pack [button .n.t2.l.b10 -text "Fermer" -image i24exit -compound left -font $p -command {destroy .n.t2}] -fill x
+}
+
+# Module de recherche en haut
+proc A_Main_Recherche {} {
+global p
+pack [label .n.t2.d.l3 -text "Rechercher une affaire" -fg #FFFFFF -bg #000080] -fill x 
+pack [entry .n.t2.d.e5 -font $p] -fill x  ; # Boite de recherche clien
+pack [label .n.t2.d.sep4 -bg #7789C0] -fill x 
+focus .n.t2.d.e5
+# Changement du texte dans la boite recherche
+bind .n.t2.d.e5 <Key> { set sql [join [list {SELECT * FROM affaire WHERE societe LIKE } '\x25[.n.t2.d.e5 get] \x25'] ""]
+	C_Refresh_List $sql }
+}
+
+# Ajout de la toolbar de boutons
+proc A_Main_Toolbar {} {
+global p
+pack [frame .n.t2.tb -bg #7789C0 -padx 5 -pady 5] -fill x
+pack [button .n.t2.tb.b1 -image iadd  -text "Ajouter" -font $p -compound left -command {Form_Detail_Affaire 1; destroy .n.t2}] -fill x -side left
+pack [button .n.t2.tb.b2 -image iedit  -text "Modifier" -font $p -compound left -command {Form_Detail_Affaire 2}] -fill x -side left
+pack [button .n.t2.tb.b3 -image idel  -text "Supprimer" -font $p -compound left -command {Affaire_Confirm_Del}] -fill x -side left
+pack [button .n.t2.tb.b4 -image idetail  -text "Voir\ndétail" -font $p -compound left -command {Form_Detail_Affaire 0}] -fill x -side left
+pack [button .n.t2.tb.b5 -image ifolder  -text "Dossier\naffaire" -font $p -compound left] -fill x -side left
+pack [button .n.t2.tb.b6 -text "Sélectionner" -font $p -image iaffaire -compound left -command {faffaire}] -fill x -side left
+pack [entry .n.t2.tb.e5] -fill x -side left -expand 1  -padx 5; # Boite de recherche affaire par nom société
+pack [button .n.t2.tb.b7 -text "Fermer" -font $p -bg #800000 -fg #FFFFFF -command {destroy .n.t2}] -side right -fill y
+}
+
+# Ajout de l'interface principale
+proc A_Main_Grille {} {
+global p
+# creation grille des affaires et boite de recherche
+
+pack [label .n.t2.d.l2 -text "Liste des affaire" -font $p  -bg #000080 -fg white] -fill x
+pack [scrollbar .n.t2.d.scv -command ".n.t2.d.tv1 yview"] -side right -fill y
+pack [ttk::treeview .n.t2.d.tv1 -columns "A B C D E" -displaycolumns "A B C D E" -selectmode extended  -yscrollcommand ".n.t2.d.scv set"] -fill both -expand 1
+
+# Creation de la liste principale
+set largeur [list 50 50 100 100 100 100]
+set co [list 0 1 2 3 4 5]
+set nom [list "ID" "Etat" "Ref" "Date" "Client" "Description"]
+
+foreach w $co {
+.n.t2.d.tv1 column #$w -width [lindex $largeur $w]
+.n.t2.d.tv1 heading #$w -text [lindex $nom $w]
+}
+
+
+# mise à jour de la grille à l'ouverture de la Form
+A_Refresh_Grille
+
+
+# ----- Clic sur une ligne dans la treeview et recuperation de l'id -----
+.n.t2.d.tv1 tag bind ttk <1> { global laffaire ; set myid [%W identify item %x %y]; lset laffaire 0 $myid}
+
+# ----- Double clic sur une ligne ouverture detail affaire -----
+.n.t2.d.tv1 tag bind ttk <Double-1> { Form_Detail_Affaire 0; 	destroy .n.t2 }
+
+# ----- Changement du texte dans la boite recherche -----
+bind .n.t2.d.e5 <Key> { global Areq; set Areq [string cat "SELECT * FROM affaires WHERE societe LIKE " '\x25[.n.t2.d.e5 get] \x25']; Affaire_Refresh_Grille}
+focus .n.t2.d.e5
+}
+
+# MISE A JOUR DE LA GRILLE 
+proc A_Refresh_Grille {} {
+	global Areq script_path; set db "/database/affaire.dat"
+	.n.t2.d.tv1 delete [.n.t2.d.tv1 children {}] ; # delete all Treeview
+	sqlite3 db1 $script_path$db
+	set monaffaire [db1 eval  $Areq  {
+	.n.t2.d.tv1 insert "" end -id $id -text $id -values [list "$etat" "$reference" "$ladate" \
+	 "$societe" "$designation" ] -tags ttk
+	} ]
+db1 close
+}
+
+
+
+
+

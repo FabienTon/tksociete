@@ -1,0 +1,285 @@
+# ####################### MODULE FACTURE ####################################
+# Ce module permet la creation , l'édition d'une facture de tk société
+# Une facture contient les champs suivants dans la variable globale laffaire
+# 0idcontact, 1societe, 2date, 3referenceaffaire , 4n°facture,
+# 5libellé de la facture ,6date de creation ,7 somme ht ,8pourcentage TVA, 9 nombre de lignes
+
+# la variable larticle contient les champs suivant:
+# 0id listbox, 1code, 2description, 3qte, 4pxunit, 5pxtotal
+
+# on affiche d'abord l'interface puis on la rempli avec facturequidemande
+set ligne [list 0 "" "" "" "" ""] ; # la variable ligne contient 0idcompteur 1code, 2designation, 3qte, 4pxunit, 5pxtot
+set totalht 0
+
+# Form facture q=qui demande l'ouverture de la form 0voir, 1ajout, 2edit
+proc Form_Facture {q} {
+global Areq p lecontact ary laffaire
+if {[winfo exist .n.t8] == 0} {
+ttk::frame .n.t8 ; .n add .n.t8 -text "Facture"
+# Ajout de la frame principale
+pack [frame .n.t8.m -bd 1 -relief raised -bg #1A2277] -fill both -side left -expand 1
+Facture_Titre
+Facture_Entete
+Facture_Grille
+Facture_Pieddepage
+}
+.n select .n.t8
+Facture_Qui_Demande $q
+}
+
+# calcul ligne : qte x pxunit
+proc Fac_Calcul_Total_Ligne {l} {
+global ary; set a $ary($l,2) ; set b $ary($l,3)
+set ary($l,4) [expr $a * $b]
+}
+
+# Calcul du total de la grille
+proc Fac_Calcul_Total_Grille {} {
+global totalht
+.n.t8.m.b.l.f1.l1.ht delete 0 end
+.n.t8.m.b.l.f1.l1.ht insert end $totalht
+}
+
+# ############################## DESIGN INTERFACE #####################
+# Ajout du titre interface
+proc Facture_Titre {} {
+pack [frame .n.t8.m.fr -bg #A00050] -fill x
+pack [label .n.t8.m.fr.numclient -bg #A00050 -text "id" -padx 5] -fill y -side left  
+pack [label .n.t8.m.fr.t -bg #A00050 -fg #FFFFFF -anchor center -text "EDITION DE LA FACTURE"] -fill x -expand 1 -side left
+pack [button .n.t8.m.fr.b1 -text "Fermer" -image iclose -compound left -command {destroy .n.t8}] -side right -padx 2 -pady 2
+}
+
+# Entete de la facture
+proc Facture_Entete {} {
+pack [frame .n.t8.m.f1] -fill x
+pack [labelframe .n.t8.m.f1.l0 -text "société" -fg #000000 ] -side left -fill both -expand 1 -padx 4 -pady 4 
+pack [entry .n.t8.m.f1.l0.soc -bg #FFFFBF -fg #000000] -fill both -expand 1
+pack [labelframe .n.t8.m.f1.l1 -text "Affaire" -fg #000000 ]  -side left -fill both -expand 1 -padx 4 -pady 4
+pack [entry .n.t8.m.f1.l1.aff -bg #FFFFBF -fg #000000]  -fill both -expand 1
+pack [labelframe .n.t8.m.f1.l2 -text "Facture numéro" -fg #000000 ]  -side left -fill both -expand 1 -padx 4 -pady 4 
+pack [entry .n.t8.m.f1.l2.numfac -bg #FFFFBF -fg #000000] -fill both -expand 1
+pack [frame .n.t8.m.f2] -fill x
+pack [labelframe .n.t8.m.f2.l3 -text "Libellé de la facture" -fg #000000 ] -side left -fill both -expand 1 -padx 4 -pady 4 
+pack [entry .n.t8.m.f2.l3.desc -bg #FFFFBF -fg #000000]  -fill both -expand 1
+pack [labelframe .n.t8.m.f2.l4 -text "Date" -fg #000000 ] -side left -fill both -padx 4 -pady 4 
+pack [entry .n.t8.m.f2.l4.date -bg #FFFFBF -fg #000000]  -fill both -expand 1
+}
+
+# Grille d'articles dans la facture
+proc Facture_Grille {} {
+pack [ttk::notebook .n.t8.m.nb] -fill both -padx 4 -pady 4 -expand 1
+ttk::frame .n.t8.m.nb.tab0 ; .n.t8.m.nb add .n.t8.m.nb.tab0
+pack [ttk::treeview .n.t8.m.nb.tab0.tv -columns "A B C D" -displaycolumns "A B C D" -selectmode extended] -fill both -side left -expand 1
+.n.t8.m.nb.tab0.tv heading #0 -text "Code"
+.n.t8.m.nb.tab0.tv column #1 -width 100 ; .n.t8.m.nb.tab0.tv heading A -text "Designation"
+.n.t8.m.nb.tab0.tv heading B -text "Qte"
+.n.t8.m.nb.tab0.tv heading C -text "Px.unit."
+.n.t8.m.nb.tab0.tv heading D -text "Px.tot."
+
+pack [frame .n.t8.m.nb.tab0.d -padx 5 -pady 5] -fill y -side left
+pack [button .n.t8.m.nb.tab0.d.badd -text "Ajout\nligne"  -image iadd -compound left -command {.n.t8.m.nb select 1}] -fill x
+pack [button .n.t8.m.nb.tab0.d.bedit -text "Modif\nligne"  -image iedit -compound left -command {Facture_Demande_Edit}] -fill x
+pack [button .n.t8.m.nb.tab0.d.bdel -text "Suppr.\nligne" -image idel -compound left -command {.n.t8.m.nb.tab0.tv delete [.n.t8.m.nb.tab0.tv selection]}] -fill x
+pack [button .n.t8.m.nb.tab0.d.btot -text "Calcul\ntotal" -image iresume -compound left ] -fill x
+
+ttk::frame .n.t8.m.nb.tab1 ; .n.t8.m.nb add .n.t8.m.nb.tab1 ; # Creation du détail article
+pack [label .n.t8.m.nb.tab1.titre -bg #A00050 -fg #FFFFFF -anchor center -text "Ajout d'un article"] -fill x -expand 1
+pack [labelframe .n.t8.m.nb.tab1.lb0 -text "code" -width 400] -padx 5 -pady 5 
+pack [entry .n.t8.m.nb.tab1.lb0.code ] -fill x -side left
+pack [button .n.t8.m.nb.tab1.lb0.ouvrestock -text "A partir du stock..." -image istock -compound left -command {Form_Main_Stock ; global quidemande ; set quidemande "ffacture"}] -side left
+pack [labelframe .n.t8.m.nb.tab1.lb1 -text "Description" -padx 5 -pady 5]
+pack [entry .n.t8.m.nb.tab1.lb1.desc ] -fill x
+pack [labelframe .n.t8.m.nb.tab1.lb2 -text "Qte" -padx 5 -pady 5]
+pack [entry .n.t8.m.nb.tab1.lb2.qte ] -fill x
+pack [labelframe .n.t8.m.nb.tab1.lb3 -text "Px.unit" -padx 5 -pady 5] 
+pack [entry .n.t8.m.nb.tab1.lb3.pxu ] -fill x
+pack [button .n.t8.m.nb.tab1.bcalc -text "calculer le total" -command Article_Total]
+pack [labelframe .n.t8.m.nb.tab1.lb4 -text "Px.total" -padx 5 -pady 5] 
+pack [entry .n.t8.m.nb.tab1.lb4.pxtot ] -fill x
+pack [frame .n.t8.m.nb.tab1.fr] -fill x
+pack [button .n.t8.m.nb.tab1.fr.bcancel -text "Annuler" -command {.n.t8.m.nb select 0}] -side right
+pack [button .n.t8.m.nb.tab1.fr.bok -text "Ok" -command {Fac_Bdd_Ajout}] -side right
+focus .n.t8.m.nb.tab1.lb1.desc 
+
+
+.n.t8.m.nb.tab0.tv tag bind ttk <Double-1> { Article_Demande_Edit [.n.t8.m.nb.tab0.tv selection]}
+}
+
+
+# Pied de page avec calcul TVA et generation document
+proc Facture_Pieddepage {} {
+# pied de page calcul de la somme et boutons de génération
+pack [labelframe .n.t8.m.b -padx 5 -pady 5 -bg #DFDFDF -text "Total et actions sur facture"] -fill both -expand 1
+pack [frame .n.t8.m.b.l] -fill x -padx 5 -pady 5 -side left -expand 1
+# frame calcul de la TVA
+pack [frame .n.t8.m.b.l.f1] -fill both -expand 1
+set h .n.t8.m.b.l.f1
+pack [labelframe .n.t8.m.b.l.f1.l1 -text "Somme HT - TVA %" ] -fill x
+pack [entry .n.t8.m.b.l.f1.l1.ht] -fill both -expand 1 -padx 3 -pady 3 -side left
+pack [ttk::combobox .n.t8.m.b.l.f1.l1.cb -values [Conf_Read "Tva"] -text "20"] -fill both -expand 1 -side left -padx 3 -pady 3   -side left
+.n.t8.m.b.l.f1.l1.cb set 20
+pack [button .n.t8.m.b.l.f1.l1.b3 -text "Calcul TVA"  -image icompta -compound left] -side left -fill x  -padx 3 -pady 3 
+pack [labelframe .n.t8.m.b.l.f1.l2 -text "Somme tva - TTC euros" ] -fill x
+pack [entry .n.t8.m.b.l.f1.l2.tva] -fill both -expand 1 -padx 3 -pady 3 -side left
+pack [entry .n.t8.m.b.l.f1.l2.ttc] -fill both -expand 1 -padx 3 -pady 3 -side left
+
+# Frame boutons d'action sur facture
+pack [frame .n.t8.m.b.d] -fill x -padx 10 -pady 10 -side left -expand 1
+set i .n.t8.m.b.d
+pack [button $i.b0 -text "Générer le courrier d'envoi" -image ifile -compound left] -fill both -expand 1
+pack [button $i.b1 -text "Générer la facture"  -image ifile -compound left] -fill both -expand 1
+pack [button $i.b2 -text "Ouvrir le dossier de l'affaire"  -image ifolder -compound left -command Affaire_Folder] -fill both -expand 1
+pack [button $i.b3 -text "Valider la facture"  -image iclose -compound left] -fill both  -expand 1
+}
+
+# ################### QUI DEMANDE L'ACCES A LA FACTURE 0voir, 1ajout, 2edit ###############
+proc Facture_Qui_Demande {q} {
+global lecontact
+switch $q {
+	0 {}
+	1 {Facture_Demande_Ajout}
+	2 {}
+}
+}
+
+# Demande d'ajout nouvelle facture
+# 0idaffaire, 1societe, 2date, 3reference , 4designation, 5affectation ,6numclient ,7nomcontact ,8etat
+proc Facture_Demande_Ajout {} {
+global laffaire
+.n.t8.m.fr.numclient configure -text ""
+.n.t8.m.f1.l0.soc insert end [lindex $laffaire 1]
+.n.t8.m.f2.l4.date insert end [lindex $laffaire 2]
+.n.t8.m.f1.l1.aff insert end [lindex $laffaire 3]
+set a "FAC" ; set b [lindex $laffaire 3] ; set c "-1"
+.n.t8.m.f1.l2.numfac insert end $a$b$c
+.n.t8.m.f2.l3.desc insert end [lindex $laffaire 4]
+Fac_Refresh_Grille
+}
+
+# Demande edition facture courante
+proc Facture_Demande_Edit {} {
+
+}
+
+# Efface tous les champs de la facture
+proc Facture_Efface_Champs {} {
+.n.t8.m.fr.numclient configure -text ""
+.n.t8.m.f1.l0.soc delete 0 end
+.n.t8.m.f1.l1.aff delete 0 end
+.n.t8.m.f2.l4.date delete 0 end
+.n.t8.m.f1.l2.numfac delete 0 end
+.n.t8.m.f2.l3.desc delete 0 end
+.n.t8.m.f2.l4.date delete 0 end
+.n.t8.m.b.l.f1.l1.ht delete 0 end
+.n.t8.m.b.l.f1.l2.tva delete 0 end
+.n.t8.m.b.l.f1.l2.ttc delete 0 end
+}
+
+
+
+# ################ SAISI EDITION DES ARTICLES ##########################
+
+# demande ajout article
+proc Article_Demande_Ajout {} {
+.n.t8.m.nb select 1
+Article_Efface_Champs
+}
+
+# Demande modification de l'article
+proc Article_Demande_Edit {idx} {
+global ligne
+set lecode [.n.t8.m.gr.g.tv item $idx -text]
+set lereste [.n.t8.m.gr.g.tv item $idx -values]
+.n.t8.m.nb select 1
+Article_Efface_Champs
+lset ligne 0 $idx
+lset ligne 1 $lecode
+lset ligne 2 [lindex $lereste 0]
+lset ligne 3 [lindex $lereste 1]
+lset ligne 4 [lindex $lereste 2]
+lset ligne 5 [lindex $lereste 3]
+.artnouv.lb0.code insert end [lindex $ligne 1]
+.artnouv.lb1.desc insert end [lindex $ligne 2]
+.artnouv.lb2.qte  insert end [lindex $ligne 3]
+.artnouv.lb3.pxu  insert end [lindex $ligne 4]
+.artnouv.lb4.pxtot  insert end [lindex $ligne 5]
+}
+
+# Efface les champs dans la form article
+proc Article_Efface_Champs {} {
+.n.t8.m.nb.tab1.lb0.code delete 0 end
+.n.t8.m.nb.tab1.lb1.desc delete 0 end
+.n.t8.m.nb.tab1.lb2.qte delete 0 end
+.n.t8.m.nb.tab1.lb3.pxu delete 0 end
+.n.t8.m.nb.tab1.lb4.pxtot delete 0 end
+}
+
+# Calcul du total de l'article
+proc Article_Total {} {
+set a [.n.t8.m.nb.tab1.lb2.qte get]
+set b [.n.t8.m.nb.tab1.lb3.pxu get]
+.n.t8.m.nb.tab1.lb4.pxtot delete 0 end
+.n.t8.m.nb.tab1.lb4.pxtot insert end [expr $a * $b]
+}
+
+# ########################### GESTIONS DE LA BDD ARTICLES fac.db ######
+# Ajout article
+proc Fac_Bdd_Ajout {} {
+global script_path lecontact
+set a1 [.n.t8.m.nb.tab1.lb0.code get]
+set a2 [.n.t8.m.nb.tab1.lb1.desc get]
+set a3 [.n.t8.m.nb.tab1.lb2.qte get]
+set a4 [.n.t8.m.nb.tab1.lb3.pxu get]
+set a5 [.n.t8.m.nb.tab1.lb4.pxtot get]
+set a6 [.n.t8.m.f1.l2.numfac get]
+set a7 [lindex $lecontact 0]
+set a8 [.n.t8.m.f2.l4.date get]
+set db "/database/fac.db"
+sqlite3 db1 $script_path$db
+db1 eval { INSERT INTO facture ("code","desc","Qte","pxunit","pxtot","numfac","numclient","ladate") VALUES ($a1,$a2,$a3,$a4,$a5,$a6,$a7,$a8) }
+db1 close
+Fac_Refresh_Grille
+.n.t8.m.nb select 0
+}
+
+# Edition article
+proc Fac_Bdd_Modif {} {
+	
+}
+
+# Suppression article
+proc Fac_Bdd_Del {myid} {
+global lecontact script_path
+set myid [lindex $lecontact 0]
+set db "/database/fac.db"
+sqlite3 db1 $script_path$db
+db1 eval { DELETE FROM facture WHERE id = $myid }
+	db1 close
+Fac_Refresh_Grille
+}
+
+# Rafraichi la grille des articles
+proc Fac_Refresh_Grille {} {
+global script_path totalht; set db "/database/fac.db"
+set totalht 0
+set Areq "SELECT * FROM facture WHERE numfac = '[.n.t8.m.f1.l2.numfac get]'" ; puts $Areq
+set total 0
+.n.t8.m.nb.tab0.tv delete [.n.t8.m.nb.tab0.tv children {}] ; # Efface les articles
+sqlite3 db1 $script_path$db
+set leslignes [db1 eval  $Areq  { .n.t8.m.nb.tab0.tv insert {} end -id $id -text $code -values [list  "$desc" "$Qte" "$pxunit" "$pxtot"] -tags ttk
+	set totalht [expr $totalht + $pxtot] } ]
+db1 close
+.n.t8.m.b.l.f1.l1.ht delete 0 end ; .n.t8.m.b.l.f1.l1.ht insert end $totalht
+}
+
+
+# Récupère l'article sélectionné dans le stock
+proc Article_Get_From_Stock {} {
+global larticle
+.n.t8.m.nb.tab1.lb0.code delete 0 end
+.n.t8.m.nb.tab1.lb1.desc delete 0 end
+.n.t8.m.nb.tab1.lb0.code insert end [lindex $larticle 1]
+.n.t8.m.nb.tab1.lb1.desc insert end [lindex $larticle 2]
+focus .n.t8.m.nb.tab1.lb2.qte
+}
+

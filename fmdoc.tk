@@ -1,0 +1,74 @@
+######################## MODULE FORMULAIRE ####################################
+# Ce module permet la gestion des documents de tk société
+# Entendez par document : Devis, Bon de livraison, facture, relance etc...
+
+
+
+# ############################## INTERFACE #############################
+proc Form_Main_Document {} {
+if {[winfo exist .n.t5] == 0} {
+ttk::frame .n.t5 ; .n add .n.t5
+Doc_Titre
+Doc_Toolbar
+Doc_Liste
+}
+.n select .n.t5
+}
+
+# Ajout titre fenêtre
+proc Doc_Titre {} {
+pack [label .n.t5.titre -bg #9d3d0b -fg #FFFFFF -text "MODULE FORMULAIRES" -font "Fixed 9"] -fill x
+}
+
+# Ajout toolbar des boutons
+proc Doc_Toolbar {} {
+pack [frame .n.t5.tb -bd 1 -bg #f09d52 -relief raised] -fill x
+pack [button .n.t5.tb.b1 -text "Ajouter\nformulaire" -image iadd -compound left -command {fdcontact 0 0 destroy .n.t5}] -side left -padx 2 -pady 2
+pack [button .n.t5.tb.b2 -text "Editer\nformulaire" -image iedit -compound left -command {fdcontact 0 1}] -side left -padx 2 -pady 2
+pack [button .n.t5.tb.b3 -text "Suprrimer\nformulaire" -image idel -compound left -command {fdcontact 0 2}] -side left -padx 2 -pady 2
+pack [entry .n.t5.tb.e5 ] -side left -padx 2 -pady 2 -fill x
+pack [button .n.t5.tb.b6 -text "Lier à\nl'affaire" -image iaffaire -compound left -command {faffaire}] -side left -padx 2 -pady 2
+pack [button .n.t5.tb.b7 -text "Autre bouton" -image ifile -compound left -command {fform}] -side left -padx 2 -pady 2
+pack [button .n.t5.tb.b8 -text "Fermer" -image iclose -compound left -command {destroy .n.t5}] -side right -padx 2 -pady 2	
+}
+
+# Ajout de la liste des formulaires
+proc Doc_Liste {} {
+global p
+# creation grille des formulaires
+pack [frame .n.t5.d -bg #f09d52 -padx 5 -pady 5] -fill both -expand 1
+pack [label .n.t5.d.l2 -text "Liste des affaire" -font $p  -bg #9d3d0b -fg white] -fill x
+pack [scrollbar .n.t5.d.scv -command ".n.t5.d.tv1 yview"] -side right -fill y
+pack [ttk::treeview .n.t5.d.tv1 -columns "A B C D E" -displaycolumns "A B C D E" -selectmode extended -yscrollcommand ".n.t5.d.scv set"] -fill both -expand 1
+
+# Creation de la liste principale
+set largeur [list 50 50 100 100 100 100]
+set co [list 0 1 2 3 4 5]
+set nom [list "ID" "Client"  "Type doc." "Etat" "Ref.doc" "Date" "Description"]
+
+foreach w $co {
+.n.t5.d.tv1 column #$w -width [lindex $largeur $w]
+.n.t5.d.tv1 heading #$w -text [lindex $nom $w]
+}
+
+
+# mise à jour de la grille à l'ouverture de la Form
+Doc_Rafraichi_Grille
+
+
+# ----- Clic sur une ligne dans la treeview et recuperation de l'id -----
+.n.t5.d.tv1 tag bind ttk <1> { global laffaire ; set myid [%W identify item %x %y]; lset laffaire 0 $myid}
+
+# ----- Double clic sur une ligne ouverture detail affaire -----
+.n.t5.d.tv1 tag bind ttk <Double-1> { Form_Detail_Affaire 0; 	destroy .n.t5 }
+
+# ----- Changement du texte dans la boite recherche -----
+bind .n.t5.tb.e5 <Key> { global Areq; set Areq [string cat "SELECT * FROM affaires WHERE societe LIKE " '\x25[.n.t5.tb.e5 get] \x25']; Doc_Rafraichi_Grille}
+focus .n.t5.tb.e5
+}
+
+
+# Rafraichi la liste par nouvelle requete
+proc Doc_Rafraichi_Grille {} {
+	
+}

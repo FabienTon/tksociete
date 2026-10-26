@@ -1,0 +1,98 @@
+#!/usr/bin/wish
+# tksociété est un logiciel de gestion de tpme réalisé en tcltk pur Il utilise une base de données sqlite 3.
+# logiciel gratuit librement redistribuable.
+package require Tk
+package require sqlite3
+package require Tix
+
+ttk::style configure TNotebook -tabposition sw
+
+source icon.tk ; source database.tk
+source fmcontact.tk ; source fdcontact.tk
+source fmaffaire.tk ; source fdaffaire.tk
+source fmdoc.tk ; source ffacture.tk
+source fmstock.tk ; source fdstock.tk
+source fmsav.tk ; source fmcompta.tk
+source foption.tk ; source fabout.tk
+source fmdoc.tk ; source gridview.tk
+source fresume.tk ; source setting.tk
+option add *font "Fixed 8"
+
+proc Test_If_Exist {f} { if {[winfo exist $f]==1} {destroy $f}}
+
+# Definition taille fenêtre principale
+wm title . "tk Société logiciel de gestion pour TPME"
+wm geometry . [winfo vrootwidth .]x[winfo vrootheight .]+0+0
+wm iconphoto . -default i20plan
+ set laffaire [list 0 ""]
+ set encours 0 ; # Si une action dans le logiciel est en cours on ne ferme pas
+set larticle [list 0 "" "" "" "" "" "" "" "" "" ""] ;  set lechoix 0 ; set Achoix 0 ; set Schoix 0
+set quidemande "personne" ; # interconnexion entre les form echange de données
+set lebg #808080 ; # Fond gris foncé de toutes les fenêtres
+
+set p "Fixed 8" ; # Police par défaut du logiciel
+set compteur_affaire [Conf_Read Compteur] ; # lecture du compteur d'affaire
+
+# lecture du fichier de configuration pour coordonnées de ma société
+set moi [list [Conf_Read Societe] [Conf_Read Gerant] [Conf_Read Adresse] [Conf_Read Codepostal] [Conf_Read Ville]]
+
+
+# ##################### FENETRE PRINCIPALE AU DEMARRAGE ####################################
+# création de la toolbar principale a gauche de l'écran
+
+pack [frame .t -bd 1 -relief solid -bg #2F4380] -side left -fill y
+pack [button .t.bcontact -text "  Contact   " -compound left -image i20contact -font $p -command [list M_Bclic 0] ] -padx 2 -pady 2 -fill x
+pack [button .t.baffair -text "  Affaires  " -compound left   -image i20plan -font $p -command [list M_Bclic 1] ] -padx 2 -pady 2 -fill x
+pack [button .t.bdocument  -text "  Documents " -compound left  -image i20letter -font $p -command [list M_Bclic 2] ]  -padx 2 -pady 2 -fill x
+pack [button .t.bstock -text "     Stock    " -compound left -image i20stock -font $p -command [list M_Bclic 3]] -padx 2 -pady 2 -fill x
+pack [button .t.bmaint -text "    SAV     " -compound left -image i20sav -command [list M_Bclic 4] ]  -padx 2 -pady 2 -fill x
+pack [button .t.bcompta -text "Comptabilité" -compound left -image i20euro -font $p -command [list M_Bclic 5] ]   -padx 2 -pady 2 -fill x
+pack [button .t.boption -text "   Options  " -compound left -image ioption -font $p  -command [list M_Bclic 6] ]   -padx 2 -pady 2 -fill x
+pack [button .t.binfo -text "   Infos    " -compound left -image iinfo -font $p -command [list M_Bclic 7] ]  -padx 2 -pady 2 -fill x
+pack [button .t.bexit -text "   Quitter  " -compound left -image iquit -font $p -command [list M_Bclic 8] ] -side bottom -padx 2 -pady 2 -fill x
+
+################### Frame à droite #####################################
+pack [frame .n -bg #101010] -fill both -expand 1
+
+
+# Maximisation de la fenetre principale
+proc Form_Full_View {w} {
+	set wi [winfo vrootwidth $w] ; set he [winfo vrootheight $w]
+	set sep "x"
+	wm geometry $w $wi$sep$he+0+0
+}
+
+# Centrer la fenêtre à l'écran (cas du multiple écran)
+proc Form_Center {w} {
+set x [expr { [winfo vrootwidth  .] - ( [winfo reqwidth $w]  ) / 2 }]
+set y [expr { [winfo vrootheight .] - ( [winfo reqheight $w] ) / 2 }]
+wm geometry $w +${x}+${y}
+}
+
+# Test si le répertoire existe
+proc Test_If_Folder_Exist {myrep} {
+if {[file exist $myrep] == 0} {file mkdir $myrep}
+}
+
+
+# Affichage du form concerné
+# 1contact, 2affaire, 3document, 4stock ,5sav ,6comptabilité, 7options, 8infos ,9quitter
+proc M_Bclic {idx} {
+	switch $idx {
+0 {C_Form_Main}
+1 {A_Form_Main}
+2 {}
+3 {}
+4 {}
+5 {}
+6 {}
+7 {Ab_Form_Main}
+8 {M_Test_Avant_Fermeture}
+	}
+}
+
+# Test avant fermeture du logiciel si quelque chose en cours
+proc M_Test_Avant_Fermeture {} {
+	global encours
+	if {$encours eq 1} {} {exit}
+}

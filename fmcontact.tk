@@ -1,0 +1,143 @@
+# MODULE GESTION DES CONTACTS, fait parti du logiciel TKsociété
+# www.tcltk.fr réalisé en aout 2024 par Fabien T.
+# Logiciel librement redistribuable
+
+# Variables globales pour le module contact
+set Cdetail [list 0 "Societe" "Nom" "Prenom" "adresse" "cp" "ville" "tel" "port" "fax" "email" "web"] ; # contact courant
+set Ctixid "" ; # liste des id des contacts pour la librairie Tix
+set Cask 0 ; # qui demande l'acces au contact 0vue, 1ajout 2edition
+set Cclic 0; # interception d'un clic sur la librairie Tix
+
+# ############################### MODULE CONTACT  ######################
+# Form contact principale
+proc C_Form_Main {} {
+global p idcontact nomcontact; set monid 0
+if {[winfo exist .n.t0] == 0} {
+pack [frame .n.t0 -bg #101010 -padx 10 -pady 10] -side right -fill both -expand 1
+C_Menu ; # Ajout du menu à gauche
+C_Recherche ; # Ajout de la boite de recherche
+C_Liste ; # Ajout de la liste des contacts sous forme d'icones
+C_Refresh_List "Select * from contact"
+}
+}
+
+# Frame menu a gauche
+proc C_Menu {} {
+global p
+pack [frame .n.t0.l  -bg #47A027 -padx 4 -pady 4] -fill y -side left
+pack [label .n.t0.l.l0 -text "Action sur le contact" -fg #FFFFFF -bg #296017] -fill x 
+pack [button .n.t0.l.bcadd -image iadd -font $p -text "Ajouter" -compound left -command C_Cadd] -fill x
+pack [button .n.t0.l.bcedit -image iedit -font $p -text "Modifier" -compound left -command C_Cedit] -fill x
+pack [button .n.t0.l.bcdel -image idel -font $p -text "Supprimer" -compound left -command C_Cdel] -fill x
+pack [button .n.t0.l.bcdetail -image idetail -font $p -text "Détails" -compound left  -command C_Cdetail] -fill x
+pack [label .n.t0.l.sep0 -bg #47A027] -fill x 
+pack [button .n.t0.l.bcfolder -image ifolder -font $p -text "Dossier" -compound left  -command C_Dossier] -fill x
+pack [button .n.t0.l.bcselect -image iselect -font $p -text "Sélectionner\nce contact" -compound left -command C_Cselect] -fill x
+pack [label .n.t0.l.sep1 -bg #47A027] -fill x 
+pack [label .n.t0.l.l1 -text "Affaires" -fg #FFFFFF -bg #000080] -fill x 
+pack [button .n.t0.l.baadd -image i20plan -font $p -text "Ajouter\n une affaire" -compound left -command C_Aadd] -fill x
+pack [button .n.t0.l.baresume -image iresume -font $p -text "Résumé des\n affaires" -compound left -command C_Aresume] -fill x
+pack [label .n.t0.l.sep2 -bg #47A027] -fill x 
+pack [label .n.t0.l.l2 -text "Document" -fg #FFFFFF -bg #E06C00] -fill x 
+pack [button .n.t0.l.baddaffaire -image ifile -font $p -text "Ajouter un\n document" -compound left -command Bcontact_Dajout] -fill x
+pack [label .n.t0.l.sep3 -bg #47A027] -fill x 
+pack [button .n.t0.l.b10 -text "Fermer" -image i24exit -compound left -font $p -command {destroy .n.t0}] -fill x
+}
+
+# Module de recherche en haut
+proc C_Recherche {} {
+global p
+pack [frame .n.t0.r  -bg #47A027 -padx 4 -pady 4] -fill both -expand 1 -side right
+pack [label .n.t0.r.l3 -text "Rechercher un contact" -fg #FFFFFF -bg #296017] -fill x 
+pack [entry .n.t0.r.e5 -font $p] -fill x  ; # Boite de recherche clien
+pack [label .n.t0.r.sep4 -bg #47A027] -fill x 
+focus .n.t0.r.e5
+# Changement du texte dans la boite recherche
+bind .n.t0.r.e5 <Key> { set sql [join [list {SELECT * FROM contact WHERE societe LIKE } '\x25[.n.t0.r.e5 get] \x25'] ""]
+	C_Refresh_List $sql }
+}
+
+# Liste des contacts en icones (librairie tix)
+proc C_Liste {} {
+pack [label .n.t0.r.l4 -text "Liste des contacts" -fg #FFFFFF -bg #296017] -fill x 
+pack [tixScrolledTList .n.t0.r.lc -options {tlist.browseCmd browse}] -expand 1 -fill both
+}
+
+# remplissage de laa treeview contact 
+proc C_Refresh_List { sql } {
+global p Ctixid
+sqlite3 db1 "./database/contact.dat"
+set tlist [.n.t0.r.lc subwidget tlist]
+$tlist configure -bg #E7FFDF -fg black
+$tlist delete 0 end
+set Ctixid ""
+db1 eval $sql {
+	#image create photo ipp$id -data $data
+	lappend Ctixid $id
+	$tlist insert end -itemtype imagetext -text "$societe \n$nom \n$prenom" -image i50contact }
+db1 close
+}
+
+# Si pas de sélection dans la grille (c'est a dire si idcontact=0), prexec = procedure a executer si ok
+proc C_Si_Selection {prexec} {
+global Cdetail
+if {[lindex $Cdetail 0] != 0 } {$prexec} {
+	tk_messageBox -type ok -icon error -title "Erreur!" \
+	-message "Veuillez d'abord sélectionner un contact!"	}
+}
+
+# ######################## EVENEMENTS BOUTONS ##########################
+
+# Clic bouton dossier Récupère et construit le chemin vers le dossier client
+proc C_Dossier {} {
+global Cdetail ; set c [Conf_Read "Application"]
+set nom [lindex $Cdetail 1]  ; # recupere la societe
+set s "/" 
+set nomsansespace [join $nom _ ] ; # enlève les espaces
+Test_If_Folder_Exist $c$s$nomsansespace ; # teste si le répertoire existe
+after 300 ; exec "thunar" "$c$s$nomsansespace" "&"
+}
+
+# Clic sur bouton détail
+proc C_Cdetail {} { global Cask ; set Cask 0 ; C_Si_Selection C_Form_Detail}
+
+# Clic sur menu Ajouter un contact
+proc C_Cadd {} { global Cask ; set Cask 1 ; C_Form_Detail}
+
+# Clic sur menu Modifier un contact
+proc C_Cedit {} { global Cask ; set Cask 2 ; C_Si_Selection C_Form_Detail}
+
+# Clic sur bouton selectionner contact
+proc C_Cselect {} { destroy .n.t0 }
+
+# Clic sur menu Supprimer un contact
+proc C_Cdel {} {
+global Cdetail
+set myid [lindex $Cdetail 0]
+sqlite3 db1 "./database/contact.dat"
+db1 eval { DELETE FROM contact WHERE id = $myid }
+db1 close
+tk_messageBox -type ok -icon info -title Information -message "Contact effacé avec succès!"	
+set sql "SELECT * FROM contact"
+C_Refresh_Grille .n.t0.f.tv1 $sql
+}
+
+######################### LIEN VERS MODuE AFFAIRE ######################
+# Clic sur bouton Ajouter une affaire
+proc C_Aadd {} { Contact_Read_Details ; Form_Detail_Affaire 1 ; destroy .n.t0 }
+
+# Clic sur bouton Résumé des affaires
+proc C_Aresume {} { Form_Resume_Contact }
+
+######################### LIEN VERS MODULE DOCUMENT ####################
+# Clic sur le bouton "ajouter un document" -> Ouvre le module document
+proc C_Dadd {} {
+	
+}
+
+proc browse {idx} {
+global Ctixid Cdetail Cclic
+set Cclic [incr Cclic]
+# je fais un modulo 2 juste pour récupérer qu'un seul clic
+if {[expr $Cclic % 2] == 0} {lset Cdetail 0 [lindex $Ctixid $idx] ; C_Lire_Detail }
+}

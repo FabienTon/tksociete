@@ -1,0 +1,35 @@
+1) Description de Tksociété
+
+Tksociété est un logiciel pour gérer une petite entreprise.
+Il dispose de modules pour gérer :
+ -  Les contacts
+ -  Les affaires
+ - le stock
+ - Les formulaires (devis, factures, bl, etc...)
+ -la comptabilité.
+
+
+2) Installation
+Ce logiciel est rélisé en tcl tk pur version 8.5
+vous devez au préalable installer tcl, tk et wish sur votre ordinateur.
+Cette version a été développée sous linux. Je ne l'ai pas essayé sur mac ou windows.
+
+3) Premier lancement
+Dans le répertoire principal de l'application, ouvrez un terminal et exécutez cette commande :
+
+wish Fmain.tk
+
+Ce programme nécessite d'installer :
+La gestion des images png avec tclpng
+la connection aux bases de données sqlite3 avec tclsqlite3
+
+copier le répertoire .tksociete dans de votre /home/user.
+
+si vous avez des questions :
+
+mon mail 
+fabien.Toniutti@free.fr
+
+salutations.
+
+

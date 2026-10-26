@@ -1,0 +1,319 @@
+# ####################### MODULE AFFAIRE ####################################
+# Ce module permet la gestion des affaires de tk société
+# Une Affaire est un chantier, une intervention SAV, tout travail dont la finalité est un paiment.
+# procédure détail de l'affaire
+# monid est l'id de l'affaire et le choix est 0voir, 1ajout, 2modif
+# la liste laffaire contient les champs suivants :
+# 0idaffaire, 1societe, 2date, 3reference affaire , 4designation, 5affectation ,6numclient ,7nomcontact ,8etat
+
+# ###########################" INTERFACE ##############################
+proc Form_Detail_Affaire {choix} { 
+global laffaire lecontact
+if {[winfo exist .n.t3] == 0} {
+ttk::frame .n.t3 ; .n add .n.t3
+AD_Titre ; # Ajout du titre
+AD_Toolbar ; # Ajout de la barre de boutons
+pack [frame .n.t3.g  -bg #101010] -fill both -side left -expand 1
+pack [frame .n.t3.c  -padx 5 -pady 5 -bg #1A2277] -fill both -side left -expand 1
+pack [frame .n.t3.d -bg #101010  -padx 5 -pady 5] -fill both -side left -expand 1
+AD_Champs ; # Ajout des champs de l'interface
+
+# choisi quoi faire 0voirdetail, 1ajoutaffaire, 2editaffaire 3delaffaire
+switch $choix {
+	0 {Affaire_Read_Details; Affaire_Vue_Fonction_Etat }
+	1 {Affaire_Etat_1; Affaire_Detail_Bouton_Ok 1}
+}
+}
+.n select .n.t3
+}
+
+# Ajout du titre
+proc AD_Titre {} {
+pack [label .n.t3.titre -bg #1A2277 -fg #FFFFFF -anchor center -text "Détail de l'affaire" -font "Fixed 9"] -fill x
+}
+
+# Ajout de la toolbar des boutons
+proc AD_Toolbar {} {
+pack [frame .n.t3.tb  -padx 5 -pady 5] -fill x
+pack [button .n.t3.tb.bentete -text "Entête classeur" -image ifolder -compound left -command Affaire_Classeur] -fill y -side left
+pack [button .n.t3.tb.bdossier -text "Dossier affaire"  -image ifolder -compound left -command Affaire_Dossier] -fill y -side left
+pack [button .n.t3.tb.bscan -text "Scanner un document" -image iscan -compound left -command App_Scanner] -fill y -side left
+pack [button .n.t3.tb.bform -text "Dossier formulaires"  -image ifile -compound left -command Dossier_Formulaire] -fill y -side left
+pack [button .n.t3.tb.bfacture -text "Factures"  -image icompta -compound left -command {Affaire_Detail_Test_Etat ; destroy .n.t3}] -fill y -side left
+pack [button .n.t3.tb.bfermer -text "Fermer" -image iclose -compound left -command {destroy .n.t3}] -side right
+}
+
+proc AD_Champs {} {
+set myw .n.t3.c
+pack [frame $myw.corps] -fill both -expand 1
+pack [label $myw.corps.etat -bg #C3F4C7 -text "Etat de l'affaire"] -fill x
+pack [frame $myw.corps.sd] -fill both
+pack [labelframe $myw.corps.sd.lf1 -text "Société" -padx 5 -pady 5] -fill both -expand 1 -side left
+pack [label $myw.corps.sd.lf1.numcl -text "Id" -bg #FAFCBF] -side left
+pack [entry $myw.corps.sd.lf1.societe ] -fill both -expand 1 -side left
+pack [button $myw.corps.sd.lf1.b1 -text "?"  -command {Form_Main_Contact} ] -fill x -side right
+pack [labelframe $myw.corps.sd.lf2 -text "Date de création" -padx 5 -pady 5] -fill both -side left
+pack [entry $myw.corps.sd.lf2.e2 ] -fill x -expand 1
+pack [labelframe $myw.corps.lf4 -text "Affectation" -padx 5 -pady 5] -fill both -padx 5 -pady 5
+pack [ttk::combobox $myw.corps.lf4.af] -side left -fill x  -expand 1
+pack [entry $myw.corps.lf4.num ] -fill x -side left -expand 1
+pack [button $myw.corps.lf4.generer -text "Générer\nun n°" -command {Affaire_Genere_Numero}] -fill x -side right
+pack [labelframe $myw.corps.lf5 -text "Description de l'affaire" -padx 5 -pady 5] -fill both
+pack [entry $myw.corps.lf5.des ] -fill x -expand 1
+pack [labelframe $myw.corps.lf8 -text "Export PDF" -padx 5 -pady 5] -fill both
+pack [button $myw.corps.lf8.bpath -text "?"  -command {} ] -fill x -side left
+pack [entry $myw.corps.lf8.fichier ] -fill both  -expand 1 -side left
+pack [button $myw.corps.lf8.bexport -text "Créer pdf"  -command {} ] -fill x -side right
+}
+
+
+
+# ----- Affichage interface en fonction de l'etat de l'affaire -----
+proc Affaire_Vue_Fonction_Etat {} {
+global laffaire ; set myetat [lindex $laffaire 8]
+eval Affaire_Etat_$myetat
+}
+
+# ----- Affaire ETAT 1 :Affaire en création -----
+proc Affaire_Etat_1 {} {
+global lecontact laffect
+#.n.t3.f.t configure -text "Ajouter une Affaire"
+.n.t3.c.corps.sd.lf1.societe insert 0 [lindex $lecontact 1]
+.n.t3.c.corps.sd.lf1.numcl configure -text [lindex $lecontact 0]
+set systemTime [clock seconds]; .n.t3.c.corps.sd.lf2.e2 insert 0 [clock format $systemTime -format %D]
+.n.t3.c.corps.lf4.af configure -values [Conf_Read "Affectation"]
+set laffect "Chantier"
+.n.t3.c.corps.etat configure -text "Affaire en cours de création..."
+.n.t3.tb.bentete configure -state disabled
+.n.t3.tb.bdossier configure -state disabled
+.n.t3.tb.bscan configure -state disabled
+.n.t3.tb.bform configure -state disabled
+.n.t3.tb.bfacture configure -state disabled
+focus .n.t3.c.corps.lf4
+}
+
+# ----- Affaire ETAT 2 : Affaire créée en attente de mouvement -----
+# la liste laffaire contient les champs suivants :
+# 0idaffaire, 1societe, 2date, 3reference , 4designation, 5affectation ,6numclient ,7nomcontact ,8etat
+proc Affaire_Etat_2 {} {
+global laffaire
+Affaire_Efface-Champs
+Affaire_Remplir_Champs
+.n.t3.c.corps.etat configure -text "Affaire créée en attente de mouvement..."
+.n.t3.c.corps.sd.lf1.b1  configure -state disabled
+.n.t3.c.corps.lf4.generer configure -state disabled
+.n.t3.c.corps.lf8.bpath configure -state disabled
+.n.t3.c.corps.lf8.bexport configure -state disabled
+.n.t3.tb.bentete configure -state normal
+.n.t3.tb.bdossier configure -state normal
+.n.t3.tb.bscan configure -state normal
+.n.t3.tb.bform configure -state normal
+.n.t3.tb.bfacture configure -state normal
+}
+
+# ----- Affaire ETAT 3 : Dépenses effectuées dur l'affaire mais pas de facturation -----
+proc Affaire_Etat_3 {} {
+Affaire_Efface-Champs
+Affaire_Remplir_Champs
+.n.t3.c.corps.etat configure -text "Achats sur affaire faits, en attente de facturation..."
+.n.t3.tb.bentete configure -state normal
+.n.t3.tb.bdossier configure -state normal
+.n.t3.tb.bscan configure -state normal
+.n.t3.tb.bform configure -state normal
+.n.t3.tb.bfacture configure -state normal
+}
+
+# ----- Affaire ETAT 4 : Facture éditée en attente de règlement -----
+proc Affaire_Etat_4 {} {
+Affaire_Efface-Champs
+Affaire_Remplir_Champs
+.n.t3.corps.etat configure -text "Affaire en attente de règlement..."
+.n.t3.tb.bentete configure -state normal
+.n.t3.tb.bdossier configure -state normal
+.n.t3.tb.bscan configure -state normal
+.n.t3.tb.bform configure -state normal
+.n.t3.tb.bfacture configure -state normal
+}
+
+# ----- Affaire ETAT 5 : Affaire cloturée et payée -----
+proc Affaire_Etat_5 {} {
+Affaire_Efface-Champs
+Affaire_Remplir_Champs
+.n.t3.c.corps.etat configure -text "!! Affaire cloturée !!"
+.n.t3.tb.bentete configure -state normal
+.n.t3.tb.bdossier configure -state normal
+.n.t3.tb.bscan configure -state disabled
+.n.t3.tb.bform configure -state normal
+.n.t3.tb.bfacture configure -state disabled
+}
+
+# ----- Confirmation creation nouvelle affaire -----
+proc Affaire_Confirm_Add {} {
+set confirm [tk_messageBox -icon question -type yesno -title "Confirmer la création" -parent . -message "Confirmez vous la creation\n de cette affaire?"]
+switch $confirm {
+	no { destroy .n.t3}
+	yes {ABdd_Add ; Affaire_Incremente_Compteur ; tk_messageBox -type ok -icon info -title Information -message "Affaire créée!"; destroy .n.t3}
+	}
+}
+
+# ----- Incremente le compteur affaire -----
+proc Affaire_Incremente_Compteur {} {
+set oldcompteur [Conf_Read "Compteur"] ; set newcompteur [expr $oldcompteur + 1]
+Conf_Edit "Compteur" $newcompteur ; Conf_Save
+}
+
+# ----- Confirmation modification de l'affaire -----
+proc Affaire_Confirm_Edit {} {
+}
+
+# ----- Confirmation de suppression de l'affaire courante -----
+proc Affaire_Confirm_Del {} {
+global laffaire ; set myid [lindex $laffaire 0]
+set confirm [tk_messageBox -icon question -type yesno -title "Confirmer la suppresion" -parent . -message "Voulez-vous suprrimer\ndéfinitivement l'affaire numéro $myid ?\n Cette action est irréversible!"]
+if {$confirm == yes} {ABdd_Del}
+}
+
+
+# ----- Ajout de la nouvelle affaire dans la bdd -----
+# la liste laffaire contient les champs suivants :
+# 0idaffaire, 1societe, 2date, 3reference , 4designation, 5affectation ,6numclient ,7nomcontact ,8etat
+proc ABdd_Add {} {
+global lecontact laffaire script_path ; set db "/database/affaire.dat"
+lset laffaire 1 [.n.t3.corps.sd.lf1.societe get]; lset laffaire 2 [.n.t3.corps.sd.lf2.e2 get]
+lset laffaire 3 [.n.t3.corps.lf4.num get]; lset laffaire 4 [.n.t3.corps.lf5.des get]
+lset laffaire 5 [.n.t3.corps.lf4.af get]; lset laffaire 6 [lindex $lecontact 0]
+lset laffaire 7 [lindex $lecontact 1]; lset laffaire 8 [.n.t3.corps.etat cget -text]
+set b1 [lindex $laffaire 1] ; set b2 [lindex $laffaire 2] ; set b3 [lindex $laffaire 3]
+set b4 [lindex $laffaire 4] ; set b5 [lindex $laffaire 5] ; set b6 [lindex $laffaire 6]
+set b7 [lindex $laffaire 7] ; set b8 2 ; sqlite3 db1 $script_path$db
+db1 eval { INSERT INTO affaires ("affectation","reference","ladate","designation",\
+				"societe","numclient","lenom","etat") VALUES ($b5,$b3,$b2,$b4,$b1,$b6,$b7,$b8) }
+db1 close
+tk_messageBox -type ok -icon info -title Warning -message "Nouvelle affaire créée avec succès !"
+destroy .n.t3
+}
+
+# ----- Modification de l'affaire id dans lindex0 de la variable globale laffaire -----
+proc ABdd_Edit {} {
+	global laffaire script_path ; set db "/database/affaire.dat"
+	set myid [lindex $laffaire 0]
+	sqlite3 db1 $script_path$db
+	db1 eval { UPDATE affaires SET "societe" = $a,"nom" = $b, "prenom" = $c,\
+		 "adr1" = $d, "cp" = $e, "ville" = $f, "tel" = $g, "port" = $h, "fax" = $i, "email" = $j WHERE "id" = $myid}
+	db1 close
+	destroy .n.o2
+}
+
+# ----- Supprime l'affaire de la bdd -----
+proc ABdd_Del {} { destroy .n.o3 }
+
+# ----- Efface l'interface -----
+proc Affaire_Efface-Champs {} {
+.n.t3.c.corps.sd.lf1.numcl configure -text ""
+.n.t3.c.corps.sd.lf1.societe delete 0 end
+.n.t3.c.corps.sd.lf2.e2 delete 0 end
+.n.t3.c.corps.lf4.num delete 0 end
+.n.t3.c.corps.lf5.des delete 0 end
+.n.t3.c.corps.lf4.af delete 0 end
+.n.t3.c.corps.etat configure -text ""
+}
+
+# ----- Rempli les champs avec l'affaire courante -----
+proc Affaire_Remplir_Champs {} {
+global laffaire
+.n.t3.c.corps.sd.lf1.numcl configure -text [lindex $laffaire 0]
+.n.t3.c.corps.sd.lf1.societe insert 0 [lindex $laffaire 1]
+.n.t3.c.corps.sd.lf2.e2 insert 0 [lindex $laffaire 2]
+.n.t3.c.corps.lf4.num insert 0 [lindex $laffaire 3]
+.n.t3.c.corps.lf5.des insert 0 [lindex $laffaire 4]
+.n.t3.c.corps.lf4.af insert 0 [lindex $laffaire 5]
+.n.t3.c.corps.etat configure -text [lindex $laffaire 8]
+}
+
+# ----- Montre le bouton Validation -----
+proc Affaire_Detail_Bouton_Ok {choix} {
+pack [button .n.t3.tb.bok -text "Créer l'affaire" -image iselect -compound left -command [list Affaire_Clic_Valid_Button $choix]] -side right
+}
+
+#  ----- Clic sur le bouton valider -----
+proc Affaire_Clic_Valid_Button {choix} {
+switch $choix { 
+	1 {set r [Affaire_Test_Champ] ; if {$r == 0} {Affaire_Confirm_Add} }
+	2 {Affaire_Confirm_Edit}
+}
+}
+
+# ----- Ouvre la bdd pour avoir les détails de l'affaire courante -----
+proc Affaire_Read_Details {} {
+global laffaire script_path ; set monid [lindex $laffaire 0]; set db "/database/affaire.dat"
+sqlite3 db1 $script_path$db ; set Areq {SELECT * FROM affaires WHERE id = $monid}
+db1 eval $Areq { global lecontact; lset laffaire 1 $societe; lset laffaire 2 $ladate
+		lset laffaire 3 $reference; lset laffaire 4 $designation; lset laffaire 5 $affectation
+		lset laffaire 6 $numclient;	lset laffaire 7 $lenom; lset laffaire 8 $etat }
+db1 close
+}
+
+# ----- Test si des champs sont vides avant modif de la bdd -----
+proc Affaire_Test_Champ {} {
+set lasociete [.n.t3.corps.sd.lf1.societe get] ; set lenum [.n.t3.corps.lf4.num get]
+set desc [.n.t3.corps.lf5.des get] ; set erreur 0
+if {$lasociete == ""} {set erreur 1}
+if {$lenum == ""} {set erreur 1}
+if {$desc == ""} {set erreur 1}
+if {$erreur == 1 } {tk_messageBox -type ok -icon error -title "Erreur!" \
+		-message "Les champs:\n -Société\n -Affectation\n -Description\n ne peuvent pas être vides!"}
+return $erreur
+}
+
+# ----- Génère un nouveau numéro d'affaire -----
+proc Affaire_Genere_Numero {} {
+global laffect ; set oldcompteur [Conf_Read "Compteur"]
+set newcompteur [expr $oldcompteur + 1] ; .n.t3.corps.lf4.num delete 0 end
+set u [string index $laffect 0] ; set m "A$newcompteur$u"
+.n.t3.corps.lf4.num insert 0 $m ; focus .n.t3.corps.lf5.des
+}
+
+# ----- lance le scanner de document -----
+proc App_Scanner { } { 
+set myapp [Conf_Read "Scanner"]
+exec $myapp &
+}
+
+# ----- Lance l'explorateur de fichiers -----
+proc App_Explorer {mypath} {
+set myapp [Conf_Read "Explorer"]
+exec $myapp &
+}
+
+# ----- Genere le fichier Pdf entete classeur -----
+proc Affaire_Classeur {} {
+set myapp [Conf_Read "Pdf"]
+}
+
+# Ouvre le dissoer de l'affaire
+proc Affaire_Dossier {} {
+set leclient [.n.t3.c.corps.sd.lf1.societe get]
+set nomsansespace [join $leclient "_"]
+set mypath [Conf_Read "Application"]
+set sep "/"
+Test_If_Folder_Exist $mypath$sep$nomsansespace ; # Créer le répertoire client si n'existe pas
+set num [.n.t3.corps.lf4.num get]
+set repaff $mypath$sep$nomsansespace$sep$num
+Test_If_Folder_Exist $repaff
+after 100 ; exec "thunar" "$repaff"
+}
+
+
+# Lors d'un clic sur ajouter facture tester l'etat de l'affaire
+proc Affaire_Detail_Test_Etat {} {
+global laffaire ; set myetat [lindex $laffaire 8] ; puts $myetat
+switch $myetat {
+	2 {Form_Facture 1} ; # L'affaire est crée on peut ajouter une facture (->ffacture.tk)
+	3 {Form_Facture 1} ; # L'affaire est crée et du matériel acheté, on peut créer une facture (->ffacture.tk)
+	4 {set reponse [tk_messageBox -type yesno -icon question -title Question -message "Une facture existe\nVoulez-vous en créer une autre?"]
+		if {$reponse == "yes"} {Form_Facture 1}} ; # L'affaire est déjà facturée. Recrée-t-on une autre facture?
+	5 {tk_messageBox -type ok -icon error -title "Impossible" -message "L'affaire est cloturée,\nPas d'ajout de facture possible!"} ; # L'affaire est cloturée, création facture impossible
+}
+}
+
+

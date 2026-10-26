@@ -1,0 +1,71 @@
+# ----- Detail d'un article -----
+# Cet onglet gère les détails des articles et permet l'ajout et la modification d'un article du stock
+
+# ----- Fenetre detail article du stock -----
+
+
+
+proc Stock_Detail_Bouton_Ok {} {
+pack [button .n.t9.fr.c.tb.b2 -text "Valider" -bg #36791B -fg #FFFFFF] -side right -fill y -padx 2 -pady 2
+}
+
+
+# ######################## Demande ouverture fdetail stock ############
+proc Stock_Detail_Open {} {
+global Schoix
+switch $Schoix {
+	0 { .n.t9.fr.c.tb.titre configure -text "Detail de l'article"}
+	1 { .n.t9.fr.c.tb.titre configure -text "Ajouter un article" ; Stock_Detail_Bouton_Ok}
+	2 { .n.t9.fr.c.tb.titre configure -text "Modification de l'article" ; Stock_Detail_Bouton_Ok}
+}
+}
+
+
+# ################## INTERFACE #########################################
+proc Istock_Form_Detail {} {
+global p ; option add *font $p
+if {[winfo exist .n.t9] == 0} {	
+ttk::frame .n.t9 ; .n add .n.t9
+pack [label .n.t9.sep0 -bg #404040 ] -fill x ; # separation en haut
+pack [frame .n.t9.fr ] -fill both -expand 1 ;# Frame centrale
+pack [frame .n.t9.fr.g -bg #404040] -fill both -expand 1 -side left ; # Frame de gauche noire
+pack [frame .n.t9.fr.c  -bg #C09B77 -padx 5 -pady 5] -fill both -expand 1 -side left ; # Frame fenetre detail stock
+Istock_Titre
+Istock_Champs
+pack [frame .n.t9.fr.d -bg #404040] -fill both -expand 1 -side left ; # Frame de droite noire
+pack [label .n.t9.sep1 -bg #404040 ] -fill both -expand 1 ; # separation en bas
+}
+.n select .n.t9
+}
+
+# Ajout Toolbar de boutons
+proc Istock_Titre {} {
+set w .n.t9.fr.c
+pack [frame $w.tb -bd 1 -bg #C09B77] -fill x
+pack [label $w.tb.logo -bg #C09B77 -image istock ] -side left -fill y
+pack [label $w.tb.titre -bg #C09B77 -fg #FFFFFF -text "DETAIL DE L'ARTICLE"] -fill x -padx 2 -pady 2 -side left -expand 1
+pack [button $w.tb.b1 -text "Fermer" -bg #800000 -fg #FFFFFF -command {destroy .n.t9}] -side right -fill y -padx 2 -pady 2
+}
+
+# Ajout des champs de l'article
+proc Istock_Champs {} {
+set w .n.t9.fr.c
+pack [frame $w.g] -fill both -expand 1 -side left
+pack [frame $w.g.body] -fill x
+pack [labelframe $w.g.body.l1 -text "Reference article" ] -fill x -padx 5 -pady 5
+pack [entry $w.g.body.l1.e1 ] -fill both -expand 1
+pack [labelframe $w.g.body.l2 -text "Description de l'article" ] -fill x -padx 5 -pady 5
+pack [entry $w.g.body.l2.e2 ] -fill both -expand 1
+pack [labelframe $w.g.body.l3 -text "Fournisseur" ] -fill x -padx 5 -pady 5
+pack [entry $w.g.body.l3.e3 ] -fill both -expand 1
+pack [labelframe $w.g.body.l4 -text "Conditionnement" ] -fill x -padx 5 -pady 5
+pack [entry $w.g.body.l4.e4 ] -fill both -expand 1
+pack [labelframe $w.g.body.l5 -text "Code barre"] -fill x -padx 5 -pady 5
+pack [entry $w.g.body.l5.e5 ] -fill both -expand 1
+pack [labelframe $w.g.body.l6 -text "Famille produit" ] -fill x -padx 5 -pady 5
+pack [entry $w.g.body.l6.e6 ] -fill both -expand 1
+pack [labelframe $w.d -text "Aperçu"] -fill both -expand 1 -side right
+pack [label $w.d.photo -bg black] -fill both -expand 1 -padx 5 -pady 5
+pack [button $w.d.bcoller -text "Coller image" -anchor center]
+}
+

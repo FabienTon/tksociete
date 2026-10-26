@@ -1,0 +1,157 @@
+# gridview widget from Fabien
+# november 2024
+
+
+
+# Create a gridview widget
+# Example : create a 10 rows and 10 columns gridview with header
+# gv:create .mywidget -rows 10 -columns 10 -head yes
+proc gv:create {w args} {
+  global gv
+  global af
+  global wi
+  set wi $w
+  set gv($w,text) ""
+  set gv($w,row) 0
+  set gv($w,column) 0
+  set gv($w,bgcell) #FFFFFF
+  set gv($w,fgcell) #000000
+ frame $w
+ canvas $w.c -bg #808080 -highlightthickness 0 -xscrollcommand "$w.xbar set" -yscrollcommand "$w.ybar set" 
+ scrollbar $w.xbar -orient horizontal -command "$w.c xview"
+ scrollbar $w.ybar -orient vertical -command "$w.c yview"
+grid $w.c -sticky news -row 0 -column 0
+grid $w.ybar -sticky ns -row 0 -column 1
+grid $w.xbar -sticky ew
+grid columnconfigure $w 0 -weight 1
+grid rowconfigure $w 0 -weight 1 
+
+ eval gv:config $w $args
+  frame $w.c.f
+  $w.c create window 0 0 -anchor nw -window $w.c.f
+  gv:refresh $w $w.c
+  bind $w.c.f <Configure> { gv:setScrollRegion %W %w %h } 
+}
+
+
+# Change configuration options for the gv widget
+# Internal function, don't use from outside
+proc gv:config {w args} {
+  global gv
+  foreach {tag value} $args {
+    switch -- $tag {
+      -width { set gv($w,width) $value }
+      -height { set gv($w,height) $value }
+      -rows { set gv($w,rows) $value}
+      -columns { set gv($w,columns) $value }
+      -bg { set gv($w,bg) $value }
+      -fg { set gv($w,fg,on) $value }
+      -bgline { set gv($w,hlline) $value }
+      -head { set gv($w,head) $value }
+    }
+  }
+}
+
+
+# Click to select one line
+# when you click with left button, you could get list of text inside gvtext variable.
+# Example set myresult $gvtext
+  proc gv:selrow { W wi } {
+	  	  global gv
+	  	  global gvtext
+	  	  set currentline ""
+    foreach l [winfo children [winfo parent $W]] {
+      if {[lindex [grid info $W] 5] == [lindex [grid info $l] 5]} {
+		  puts $l
+        $l configure -bg #A2ABD8 ; # replace by your code here ...
+      lappend currentline [$l cget -text]
+      } else {
+        $l configure -bg white ; # ... or here
+        #change color of header
+        for {set c 0} {$c < $gv($wi,columns)} {incr c} { \
+	   $wi.c.f.l0col$c configure -bg #DFDFDF}
+      }
+    }
+    set gvtext $currentline
+  }
+  
+ proc gv:cell {w args} {
+	 global gv
+	 
+  foreach {tag value} $args {
+    switch -- $tag {
+      -row { set gv($w,row) $value }
+      -column { set gv($w,column) $value }
+      -text { set gv($w,text) $value;
+		  set mywidget [string cat $w.c.f .l $gv($w,row) col $gv($w,column)]; $mywidget configure -text $gv($w,text) }
+      -bg { set gv($w,bgcell) $value;
+		  set mywidget [string cat $w.c.f .l $gv($w,row) col $gv($w,column)]; $mywidget configure  -bg $gv($w,bgcell)}
+      -fg { set gv($w,fgcell) $value;
+		    set mywidget [string cat $w.c.f .l $gv($w,row) col $gv($w,column)]; $mywidget configure  -bg $gv($w,fgcell)}
+	  -image { set gv($w,image) $value }
+      -compound { set gv($w,cellorient) $value }
+    }
+  }
+
+ }
+
+# refresh internal function !!do not call from outside!!
+proc gv:refresh {w wc} {
+  global gv
+  if {$gv($w,head) == yes } { for {set c 0} {$c < $gv($w,columns)} {incr c} { \
+	  grid [label $wc.f.l0col$c -text "head $c " -bg #DFDFDF -relief raised -font bold] -row 0 -column $c -sticky snew } }
+  
+  for {set r 1} {$r < $gv($w,rows)} {incr r} {
+    for {set c 0} {$c < $gv($w,columns)} {incr c} {
+      grid [label $wc.f.l${r}col$c  -bg white -relief ridge] -row $r -column $c -sticky snew
+      	bind $wc.f.l${r}col$c <1> { gv:selrow %W $wi }
+	bind $wc.f.l${r}col$c <Double-1> { gv:doubleclick }
+    }
+  }
+  grid rowconfigure $wc.f 0 -weight 1 
+} 
+
+# Scrollbar function
+proc gv:setScrollRegion {frm width height} {
+  set canv [winfo parent $frm]
+  set canvWidth [winfo width $canv]
+  set canvHeight [winfo height $canv]
+  if {$width < $canvWidth} { set width $canvWidth }
+  if {$height < $canvHeight} { set height $canvHeight }
+  $canv configure -scrollregion [list 0 0 $width $height]
+}
+
+# modify complete text line (text need to be list)
+# example gv:line .mywidget -row 3 -text "one list of words in every cell of gridview"
+ proc gv:line {w args} {
+	 global gv
+	 foreach {tag value} $args {
+	 switch -- $tag {
+      -row { set gv($w,row) $value }
+      -text {for {set c 0} {$c < $gv($w,columns)} {incr c} {$w.c.f.l$gv($w,row)col$c configure -text [lindex $value $c]}} 
+}
+}
+}
+
+# Change text of header 
+# example gv:head .mywidget -column 4 -text "hello"
+proc gv:head { w args} {
+global gv
+foreach {tag value} $args {
+switch -- $tag {
+      -column { set gv($w,column) $value }
+      -text { $w.c.f.l0col$gv($w,column) configure -text $value}
+  }
+}
+}
+
+# Destroy widget
+# example gv:clear .mywidget
+proc gv:clear { w } {
+	destroy $w
+}
+
+
+
+
+

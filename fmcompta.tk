@@ -1,0 +1,18 @@
+# MODULE COMPTABILITE , partie du logiciel TKsociété
+# www.tcltk.fr réalisé en Aout 2024 par Fabien T.
+# Logiciel librement redistribuable
+
+proc Form_Main_Compta {} {
+	.n add .n.o11 -text "Compta"
+	ttk::frame .n.o12
+}
+
+proc fdcompta {} {
+	.n add .n.o12 -text "Détail transaction"
+	ttk::frame .n.o13
+}
+
+
+
+
+

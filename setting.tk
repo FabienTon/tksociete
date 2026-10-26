@@ -1,0 +1,76 @@
+# Configuration file to manage settings for your tcl tk application
+# made in december 2024
+set script_path [file dirname [file normalize [info script]]]
+
+# Load Configuration file (Must obligatory be in conf folder in application project!!!)
+proc Conf_Load { } {
+	global setting
+	set setting ""
+	global script_path
+	test_if_folder_exist
+	# Open project.conf file in conf directory to read configuration
+	set f "/conf/project.conf"
+	set cfile $script_path$f
+	set fp [open $cfile r]; set allfile [read $fp]; close $fp
+	set everyline [split $allfile "\n"]
+	# Write in list in global setting variable to access fastly
+	foreach item $everyline { lappend setting $item	}
+}
+
+# internal function test if conf folder exist in application project and create .conf file
+proc test_if_folder_exist {} {
+	global script_path
+	set d "/conf"
+	set f "/project.conf"
+	set cdir $script_path$d
+	set cfile $script_path$d$f
+	set cdexist [file isdirectory $cdir]
+	
+	switch $cdexist {
+		0 { file mkdir $cdir ; set myfile [open  $cfile "w"] ; close $myfile }
+		1 { set cfexist [file exist $cfile]; if {$cfexist == 0} { set myfile [open $cfile w] ; close $myfile } }
+	}
+}
+
+# Save Configuration file
+proc Conf_Save {} {
+	global setting
+	global script_path
+	set f "/conf/project.conf"
+	set cfile $script_path$f
+	set myfile [open $cfile w] ; set d [join $setting "\n"]; puts $myfile $d ; close $myfile ;
+}
+
+# Read Value from key
+proc Conf_Read { key } {
+	global setting
+	set result [lsearch -all $setting [join [list $key "=*"] ""] ]
+	if { $result != ""} { set myval [split [lindex $setting $result] "="]; return [lindex $myval 1] }
+}
+
+# modify Value with Key
+proc Conf_Edit { key val } {
+	global setting
+	set s "=*"
+	set result [lsearch -all $setting $key$s ]
+	if { $result != ""} { 
+		set myitem [split $result "="]; lset myitem 1 $val; set e "="; set f [lindex $myitem 1]
+		 lset setting $result $key$e$f ; puts "edit: $setting"
+		}
+}
+
+# Add new Key and value
+proc Conf_Add { key val } {
+	global setting
+	lappend setting [string cat $key "=" $val]
+}
+
+# Remove Key
+proc Conf_Del { key } {
+	global setting
+	set result [lsearch -all $setting [string cat $key "=*"]]
+	if { $result != ""} { set setting [lreplace $setting $result $result] }
+}
+
+# Read component automaticaly when start program
+Conf_Load

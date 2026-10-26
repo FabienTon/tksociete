@@ -1,0 +1,199 @@
+# Fenetre option du logiciel tk societe
+
+proc Form_Option {} {
+global moi; set bg [Conf_Read "FormBg"]
+option add *font [Conf_Read "Font"]
+if {[winfo exist .n.t10] == 0} {
+ttk::frame .n.t10 ; .n add .n.t10 -image ioption
+# Ajout separateur en haut
+pack [label .n.t10.sep0 -bg #232323] -fill x -side top
+# Ajout frame grise a gauche
+pack [frame .n.t10.f0 -bg #232323 -width 100] -fill both -side left
+# Ajout interface
+pack [frame .n.t10.f -bg #00A04D] -fill both -side left -expand 1 -padx 5 -pady 5
+Option_Titre
+Option_Main_Interface
+Option_Tab_Societe
+Option_Tab_Logo
+Option_Tab_Apps
+Option_Tab_Compteur
+Option_Tab_Export
+Refresh_Option
+# Ajout frame grise a droite
+pack [frame .n.t10.f2 -bg #232323 -width 100] -fill both -side left
+}
+.n select .n.t10
+}
+
+# ----- Rafraichissement de la fenetre option ------
+proc Refresh_Option {} {
+	global moi; global compteur_affaire; global script_path
+	set myimg [Conf_Read "Logo"]
+	.n.t10.f.n.tab0.lf1.societe insert 0 [Conf_Read "Societe"]
+	.n.t10.f.n.tab0.lf2.contact insert 0 [Conf_Read "Gerant"]
+	.n.t10.f.n.tab0.lf3.adresse insert 0 [Conf_Read "Adresse"]
+	.n.t10.f.n.tab0.lf4.cp insert 0 [Conf_Read "Codepostal"]
+	.n.t10.f.n.tab0.lf5.ville insert 0 [Conf_Read "Ville"]
+	.n.t10.f.n.tab0.lf6.tel insert 0 [Conf_Read "Telephone"]
+	.n.t10.f.n.tab0.lf7.email insert 0 [Conf_Read "Email"]
+	.n.t10.f.n.tab3.compteur insert 0 [Conf_Read "Compteur"]
+	.n.t10.f.n.tab2.lf5.dossier insert 0 [Conf_Read "Application"]
+	.n.t10.f.n.tab2.lf6.formulaire insert 0 [Conf_Read "Formulaire"]
+	.n.t10.f.n.tab2.lf3.scanner insert 0 [Conf_Read "Scanner"]
+	.n.t10.f.n.tab2.lf1.explorer insert 0 [Conf_Read "Explorer"]
+	.n.t10.f.n.tab2.lf4.pdf insert 0 [Conf_Read "Pdf"]
+	.n.t10.f.n.tab2.lf2.htlm insert 0 [Conf_Read "Internet"]
+	if {[file exist $myimg] == 1} {
+	image create photo ilogo -file $myimg ; .n.t10.f.n.tab1.lf1.laphoto configure -image ilogo 
+	.n.t10.f.n.tab1.lf1.lelogo insert 0 $myimg}
+}
+
+# ----- Choix de l'application -----
+proc Option_Get_App {msg qui} {
+	set f [tk_getOpenFile -initialdir "/usr/bin/" -title $msg]
+	switch $qui {
+		1 {.n.t10.f.n.tab2.lf1.explorer delete 0 end ; .n.t10.f.n.tab2.lf1.explorer insert 0 $f}
+		2 {.n.t10.f.n.tab2.lf2.htlm delete 0 end ; .n.t10.f.n.tab2.lf2.htlm insert 0 $f}
+		3 {.n.t10.f.n.tab2.lf3.scanner delete 0 end ; .n.t10.f.n.tab2.lf3.scanner insert 0 $f}
+		4 {.n.t10.f.n.tab2.lf4.pdf delete 0 end ; .n.t10.f.n.tab2.lf4.pdf insert 0 $f}
+	}
+}
+
+# ----- Ouverture du repertoire -----
+proc Option_Get_Folder {msg qui} {
+	set d [tk_chooseDirectory -initialdir ~ -title $msg]
+	switch $qui {
+		5 {.n.t10.f.n.tab2.lf5.dossier delete 0 end ; .n.t10.f.n.tab2.lf5.dossier insert 0 $d}
+		6 {.n.t10.f.n.tab2.lf6.formulaire delete 0 end ; .n.t10.f.n.tab2.lf6.formulaire insert 0 $d}
+	}
+}
+
+# ----- Sauvegarde des options -----
+proc Option_Save {} {
+	Conf_Edit "Compteur" [.n.t10.f.n.tab3.compteur get]
+	Conf_Edit "Societe" [.n.t10.f.n.tab0.lf1.societe get]
+	Conf_Edit "Gerant" [.n.t10.f.n.tab0.lf2.contact get]
+	Conf_Edit "Adresse" [.n.t10.f.n.tab0.lf3.adresse get]
+	Conf_Edit "Codepostal" [.n.t10.f.n.tab0.lf4.cp get]
+	Conf_Edit "Ville" [.n.t10.f.n.tab0.lf5.ville get]
+	Conf_Edit "Telephone" [.n.t10.f.n.tab0.lf6.tel get]
+	Conf_Edit "Logo" [.n.t10.f.n.tab1.lf1.lelogo get]
+	Conf_Edit "Application" [.n.t10.f.n.tab2.lf5.dossier get]
+	Conf_Edit "Formulaire" [.n.t10.f.n.tab2.lf6.formulaire get]
+	Conf_Edit "Scanner" [.n.t10.f.n.tab2.lf3.scanner get]
+	Conf_Edit "Explorer" [.n.t10.f.n.tab2.lf1.explorer get]
+	Conf_Edit "Pdf" [.n.t10.f.n.tab2.lf4.pdf get]
+	Conf_Edit "Internet" [.n.t10.f.n.tab2.lf2.htlm get]
+	
+	Conf_Save
+	tk_messageBox -type ok -icon info -title "Information" -message "Sauvegarde des options effectuée!"
+	destroy .n.o8
+}
+
+
+# ######################### DESING INTERFACE FORM OPTION ###############
+# Titre de la fenetre
+proc Option_Titre {} {
+pack [frame .n.t10.f.t -bg #00A04D -pady 5 ] -fill x
+pack [label .n.t10.f.t.tpict -image ioption -bg #00A04D] -fill both -side left
+pack [label .n.t10.f.t.titre -text "Options de tksociété" -bg #00A04D -fg #FFFFFF] -fill both -side left -expand 1
+pack [button .n.t10.f.t.annuler -text "Annuler" -image iquit -compound left -command {destroy .n.t10}] -side left
+pack [button .n.t10.f.t.ok -text "Ok" -image iselect -compound left  -command {Option_Save}] -side left
+}
+
+# Interface de la fenetre option
+proc Option_Main_Interface {} {
+pack [ttk::notebook .n.t10.f.n ] -fill both -expand 1
+}
+
+# Onglet societe
+proc Option_Tab_Societe {} {
+ttk::frame .n.t10.f.n.tab0
+.n.t10.f.n add .n.t10.f.n.tab0 -text "Société"
+pack [label .n.t10.f.n.tab0.t -text "Coordonnées de votre société" -bg #404040 -fg #FFFFFF] -fill x
+pack [labelframe .n.t10.f.n.tab0.lf1 -text "Société" -padx 5 -pady 5] -fill x
+pack [ entry .n.t10.f.n.tab0.lf1.societe ] -fill both -expand 1
+pack [labelframe .n.t10.f.n.tab0.lf2 -text "Contact" -padx 5 -pady 5] -fill x
+pack [entry .n.t10.f.n.tab0.lf2.contact] -fill both -expand 1
+pack [labelframe .n.t10.f.n.tab0.lf3 -text "Adresse :" -padx 5 -pady 5] -fill x
+pack [entry .n.t10.f.n.tab0.lf3.adresse] -fill both -expand 1
+pack [labelframe .n.t10.f.n.tab0.lf4 -text "cp" -padx 5 -pady 5] -fill x
+pack [entry .n.t10.f.n.tab0.lf4.cp] -fill both -expand 1
+pack [labelframe .n.t10.f.n.tab0.lf5 -text "Ville/pays" -padx 5 -pady 5] -fill x
+pack [entry .n.t10.f.n.tab0.lf5.ville] -fill both -expand 1
+pack [labelframe .n.t10.f.n.tab0.lf6 -text "Tel :" -padx 5 -pady 5] -fill x
+pack [entry .n.t10.f.n.tab0.lf6.tel] -fill both -expand 1
+pack [labelframe .n.t10.f.n.tab0.lf7 -text "Email :" -padx 5 -pady 5] -fill x
+pack [entry .n.t10.f.n.tab0.lf7.email] -fill both -expand 1
+}
+
+# Onglet logo
+proc Option_Tab_Logo {} {
+ttk::frame .n.t10.f.n.tab1
+.n.t10.f.n add .n.t10.f.n.tab1 -text "Logo"
+pack [label .n.t10.f.n.tab1.t -text "Logo société" -bg #404040 -fg #FFFFFF] -fill x
+pack [labelframe .n.t10.f.n.tab1.lf1 -text "Logo :" -padx 5 -pady 5] -fill both -expand 1
+pack [label .n.t10.f.n.tab1.lf1.laphoto -bg #404040 ]  -fill both -expand 1
+pack [entry .n.t10.f.n.tab1.lf1.lelogo] -fill x
+pack [button .n.t10.f.n.tab1.lf1.parcourir -text "Parcourir..."] -fill x
+pack [label .n.t10.f.n.tab1.legende -text "Ce logo sera présent sur tous vos documents. \
+			\n Emplacement de votre fichier logo:"] -fill both -expand 1
+
+}
+
+# Onglet Application
+proc Option_Tab_Apps {} {
+ttk::frame .n.t10.f.n.tab2
+.n.t10.f.n add .n.t10.f.n.tab2 -text "Applications - Chemin"
+pack [label .n.t10.f.n.tab2.t -text "Configuration des Applications" -bg #404040 -fg #ffffff ] -fill x
+pack [labelframe .n.t10.f.n.tab2.lf1 -text "Explorateur de fichiers" -padx 5 -pady 5] -fill x
+pack [button .n.t10.f.n.tab2.lf1.b1 -image ifile -command [list Option_Get_App "Explorateur de fichiers" 1]] -side left
+pack [ entry .n.t10.f.n.tab2.lf1.explorer ] -fill both -expand 1
+pack [labelframe .n.t10.f.n.tab2.lf2 -text "Navigateur internet" -padx 5 -pady 5] -fill x
+pack [button .n.t10.f.n.tab2.lf2.b2 -image ifile -command [list Option_Get_App "Editeur HTML" 2]] -side left
+pack [entry .n.t10.f.n.tab2.lf2.htlm] -fill both -expand 1
+pack [labelframe .n.t10.f.n.tab2.lf3 -text "Scanneur de documents :" -padx 5 -pady 5] -fill x
+pack [button .n.t10.f.n.tab2.lf3.b3 -image ifile -command [list  Option_Get_App "Logiciel de scan" 3]] -side left
+pack [entry .n.t10.f.n.tab2.lf3.scanner] -fill both -expand 1
+pack [labelframe .n.t10.f.n.tab2.lf4 -text "Createur de fichier PDF" -padx 5 -pady 5] -fill x
+pack [button .n.t10.f.n.tab2.lf4.b4 -image ifile -command [list Option_Get_App "Convertisseur HTML/PDF" 4]] -side left
+pack [entry .n.t10.f.n.tab2.lf4.pdf] -fill both -expand 1
+pack [label .n.t10.f.n.tab2.t2 -text "Configuration des chemins" -bg #404040 -fg #ffffff] -fill x
+pack [labelframe .n.t10.f.n.tab2.lf5 -text "Dossier complet de la société" -padx 5 -pady 5 ] -fill x
+pack [button .n.t10.f.n.tab2.lf5.b5 -image ifolder -command [list Option_Get_Folder "Dossier de la société" 5]] -side left
+pack [ entry .n.t10.f.n.tab2.lf5.dossier ] -fill both -expand 1 -side left
+pack [labelframe .n.t10.f.n.tab2.lf6 -text "Dossier des formulaires" -padx 5 -pady 5] -fill x
+pack [button .n.t10.f.n.tab2.lf6.b6 -image ifolder -command [list Option_Get_Folder "Dossier des Formulaires" 6]] -side left
+pack [entry .n.t10.f.n.tab2.lf6.formulaire] -fill both -expand 1
+}
+
+# Onglet Compteur
+proc Option_Tab_Compteur {} {
+ttk::frame .n.t10.f.n.tab3
+.n.t10.f.n add .n.t10.f.n.tab3 -text "Compteur"
+pack [label .n.t10.f.n.tab3.legende -text "Définition des compteurs" -bg #404040 -fg #ffffff] -fill x
+pack [label .n.t10.f.n.tab3.l0 -text "Le compteur d'affaires est un numéro unique,
+un index qui incrémente à chaque création d'affaire.
+C'est lui qui donne les numéros d'index à tous les documents
+liés à l'affaire."] -fill x
+		pack [label .n.t10.f.n.tab3.11 -text "Nombre d'affaire: "] -fill x
+		pack [entry .n.t10.f.n.tab3.compteur] -fill x
+		pack [label .n.t10.f.n.tab3.l2 -text "Attention : Il est important de ne pas donner
+2 fois le même numéro à une affaire, sans quoi
+Il peut y avoir confusion dans les documents.
+Ne pas toucher ce paramètre une fois le logiciel
+paramétré." -fg #FF0000] -fill x
+}
+
+# Onglet export des affaires
+proc Option_Tab_Export {} {
+ttk::frame .n.t10.f.n.tab4
+.n.t10.f.n add .n.t10.f.n.tab4 -text "Export"
+pack [label .n.t10.f.n.tab4.t -text "Export des Affaires" -bg #404040 -fg #ffffff] -fill x
+}
+
+# Ouverture du dossier des formulaires
+proc Dossier_Formulaire {} {
+	set d [Conf_Read "Formulaire"]
+	exec "thunar" $d
+}

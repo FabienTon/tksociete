@@ -1,0 +1,117 @@
+# MODULE GESTION DU STOCK, partie du logiciel TKsociété
+# www.tcltk.fr réalisé en septembre 2024 par Fabien T.
+# Logiciel librement redistribuable
+# Ce module permet la gestion d'un stock, des mouvements entrés sorties.
+
+# la variable larticle contient les champs suivant:
+# 0id listbox, 1code, 2description, 3qte, 4pxunit, 5pxtotal
+
+# ----- Fenetre principalie module stock -----
+proc Form_Main_Stock {} {
+if {[winfo exist .n.t7] == 0} {
+ttk::frame .n.t7 ; .n add .n.t7 ; # Ajout du module mainstock
+Stock_Titre
+Stock_Toolbar
+Stock_Liste
+}
+.n select .n.t7
+}
+
+# Ajout du titre
+proc Stock_Titre {} {
+global p
+pack [label .n.t7.titre -text "MODULE STOCK"  -font $p -bg #6b3213 -fg white] -fill x
+}
+
+# Ajout de la toolbar boutons stock
+proc Stock_Toolbar {} {
+global p
+pack [frame .n.t7.tb -bg #C09B77 -padx 5 -pady 5] -fill x
+pack [button .n.t7.tb.b6 -text "Sélectionner\nl'article"  -font $p -image iselect -compound left -command {}] -side left
+pack [button .n.t7.tb.b7 -text "Ajouter\nun devis"  -font $p -image istock -compound left -command {}] -side left
+pack [button .n.t7.tb.b8 -text "Entrées"  -font $p -image iinfo -compound left -command {}] -side left
+pack [button .n.t7.tb.b9 -text "Sorties"  -font $p -image iinfo -compound left -command {}] -side left
+
+pack [menubutton .n.t7.tb.mb -image istock -text "Article" -compound left -menu .n.t7.tb.mb.m -relief raised] -side left -fill y
+menu .n.t7.tb.mb.m -tearoff 0
+.n.t7.tb.mb.m add command -label "Ajouter un nouvel article" -image iadd -compound left -font $p -command {global Schoix ; set Schoix 1 ; Istock_Form_Detail ; Stock_Detail_Open}
+.n.t7.tb.mb.m add command -label "Modifier l'article sélectionné" -image iedit -compound left -font $p -command {global Schoix ; set Schoix 2 ; Istock_Form_Detail ; Stock_Detail_Open}
+.n.t7.tb.mb.m add command -label "Supprimer l'article sélectionné" -image idel -compound left -font $p 
+
+pack [entry .n.t7.tb.e1  -font $p ] -fill x -padx 5 -expand 1 -side left
+pack [button .n.t7.tb.b10 -text "Fermer"  -bg #800000 -fg #FFFFFF -command {destroy .n.t7}]  -side right -fill y	
+}
+
+# Ajout de la liste des articles du stock
+proc Stock_Liste {} {
+global p
+pack [frame .n.t7.c -bg #C09B77 -padx 5 -pady 5] -fill both -side left -expand 1
+pack [label .n.t7.c.l2 -text "Liste des article"  -font $p -bg #6b3213 -fg white] -fill x
+pack [ttk::treeview .n.t7.c.tv1 -columns "A B C D E " -displaycolumns "A B C D E " -selectmode extended] -fill both -side bottom -expand 1
+
+# ajustement de la largeur des colonnes
+.n.t7.c.tv1 column #1 -width 30 -anchor center
+.n.t7.c.tv1 column #3 -width 80
+.n.t7.c.tv1 column #4 -width 80
+.n.t7.c.tv1 column #5 -width 80
+
+# Creation de la liste principale
+.n.t7.c.tv1 column #0 -width 50
+.n.t7.c.tv1 column #1 -width 50 -anchor center
+.n.t7.c.tv1 column #2 -anchor center
+.n.t7.c.tv1 heading #0 -text "ID"
+.n.t7.c.tv1 heading #1 -text "Ref."
+.n.t7.c.tv1 heading #2 -text "Description"
+.n.t7.c.tv1 heading #3 -text "Fournisseur"
+.n.t7.c.tv1 heading #4 -text "Conditionnement"
+.n.t7.c.tv1 heading #5 -text "Qte en stock"
+
+# creation de la requete de tous les contacts
+set marequete "SELECT * FROM stock"
+
+# Changement du texte dans la boite recherche article
+bind .n.t7.tb.e1 <Key> { .n.t7.c.tv1 delete [.n.t7.c.tv1 children {}]
+	set marequete [join [list {SELECT * FROM stock WHERE produit LIKE } '\x25[.n.t7.tb.e1 get] \x25'] ""]
+	Stock_Refresh_Grille .n.t7.c.tv1 $marequete }
+
+# clic sur une ligne dans la treeview et recuperation de l'id,de la ref et de la description de l'article
+.n.t7.c.tv1 tag bind ttk <1> {
+global larticle
+lset larticle 0 [.n.t7.c.tv1 identify item %x %y] ; # Récupération de l'ID
+set mylist [.n.t7.c.tv1 item [lindex $larticle 0] -values] ; # Récupération de la ligne complète
+lset larticle 1 [lindex $mylist 0] ; # Récupération de la ref
+lset larticle 2 [lindex $mylist 1] ; # Récupération de la description
+}
+# Double clic sur la grille
+.n.t7.c.tv1 tag bind ttk <Double-Button-1> {Stock_Grille_Double_Clic}
+
+focus .n.t7.tb.e1
+Stock_Refresh_Grille .n.t7.c.tv1 $marequete
+}	
+
+# remplissage de laa treeview articles du stock 
+proc Stock_Refresh_Grille { mywidget myrequest } {
+global script_path ; set bdd "/database/stock.dat"
+sqlite3 db1 $script_path$bdd
+set a [db1 eval $myrequest { $mywidget insert {} end -id $id -text $id -values [list "$ref" "$produit" "$fournisseur" "$cond" "$qte" ] -tags ttk}]
+db1 close
+}
+
+# procedure qui demande l'ouverture de la fenetre detail stock
+proc Stock_Qui_Demande {kidem lid} {
+	switch $kidem {
+		0 {Contact_Voir_Detail $lid}
+		1 {Contact_Demande_Ajout}
+		2 {Contact_Demande_Edit $lid}
+	}
+	destroy .n.t7
+	}
+
+# Evenement double clic sur la grille 
+proc Stock_Grille_Double_Clic {} {
+	global quidemande
+	switch $quidemande {
+	"personne" { Istock_Form_Detail ; Form_Stock_Refresh 0 }
+	"ffacture" { Article_Get_From_Stock ; destroy .n.t7 }	
+	}
+}

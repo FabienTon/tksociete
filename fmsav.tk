@@ -1,0 +1,56 @@
+
+
+# ####################### MODULE FORMULAIRE ####################################
+# Ce module permet la gestion des documents de tk société
+# Entendez par document : Devis, Bon de livraison, facture, relance etc...
+
+proc Form_Main_Sav {} {
+ttk::frame .n.o9
+.n add .n.o9 -image imgsav
+set m5 "{MODULE SERVICE APRES VENTE} Ajouter Editer Supprimer Rechercher: Fermer #E0E000 {Ajouter une affaire} {Liste des documents} {Lier à l'affaire}"
+.n select .n.o9
+# Titre module contact
+pack [label .n.o9.sep1 -bg [lindex $m5 6] -fg #FFFFFF -text [lindex $m5 0] -font { Serif 17}] -fill x
+
+#toolbar du module contact
+pack [frame .n.o9.f -bd 1 -relief raised] -fill x
+pack [button .n.o9.f.b1 -text [lindex $m5 1] -image imgadd -compound left -command {fdcontact 0 0
+	destroy .n.o9}] -side left -padx 2 -pady 2
+pack [button .n.o9.f.b2 -text [lindex $m5 2] -image imgedit -compound left -command {fdcontact 0 1}] -side left -padx 2 -pady 2
+pack [button .n.o9.f.b3 -text [lindex $m5 3] -image imgdel -compound left -command {fdcontact 0 2}] -side left -padx 2 -pady 2
+pack [label .n.o9.f.l4 -text [lindex $m5 4] ] -side left -padx 2 -pady 2
+pack [entry .n.o9.f.e5 -textvariable cc ] -side left -padx 2 -pady 2 -fill x
+pack [button .n.o9.f.b6 -text [lindex $m5 7] -image imgaffaire -compound left -command {faffaire}] -side left -padx 2 -pady 2
+pack [button .n.o9.f.b7 -text [lindex $m5 9] -image imgform -compound left -command {fform}] -side left -padx 2 -pady 2
+pack [button .n.o9.f.b8 -text [lindex $m5 5] -image imgquit -compound left -command {destroy .n.o9}] -side right -padx 2 -pady 2
+
+# Creation de la liste principale
+pack [label .n.o9.sep2 -bg [lindex $m5 6] -fg #FFFFFF -text [lindex $m5 8]] -fill x
+pack [listbox .n.o9.lb1 ] -fill both -expand 1
+
+# Ajout des données contact.dat dans la liste
+sqlite3 db1 ./contact.dat
+set mescontacts [db1 eval {SELECT * FROM t1 ORDER BY  a } {
+	.n.o9.lb1 insert end "id=$a | Nom:$b"
+	} ]
+db1 close	
+}
+
+# ############################ DETAIL DU CONTACT #########################
+# Cet onglet gère les détails du contacts et permet l'ajout, la modif ou suppression
+proc fdsav { monid choix } {
+ttk::frame .n.10
+.n add .n.o6 -image imgform
+.n select .n.10
+
+# Création de la toolbar détail contact
+pack [frame .n.10.f -bd 1 -relief raised -bg #47A027] -fill x
+pack [label .n.10.f.t -bg #47A027 -fg #FFFFFF -text "Liste des contacts"] -fill x -side left -padx 2 -pady 2
+pack [button .n.10.f.b1 -text "Annuler" -image imgquit -compound left  -command {destroy .n.o9}] -side right -padx 2 -pady 2
+pack [button .n.10.f.b2 -text "Valider" -image imgok -compound left] -side right -padx 2 -pady 2
+switch $choix 0 { .n.o9.f.t configure -text "Ajouter un contact"}	1 { .n.o9.f.t configure -text "Editer le contact"} 2 { .n.o9.f.t configure -text "Supprimer le contact"}
+
+}
+
+
+

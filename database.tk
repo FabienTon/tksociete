@@ -1,0 +1,32 @@
+
+
+
+# ########## AFFAIRS DATABASE ############################
+
+# Add new affair in database affaire.dat
+proc Aadd {a b c d e f g h i j} {
+	sqlite3 db1 "$::env(HOME)/.tksociete/affaire.dat"
+	set myaffair [db1 eval { INSERT INTO affaires ("societe","nom","prenom","adr1","cp","ville","tel","port","fax","email") VALUES ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j) }]
+	db1 close
+	destroy .n.o2
+}
+
+# Edit affair in database affaire.dat
+proc Aedit { myid a b c d e f g h i j } {
+	sqlite3 db1 "$::env(HOME)/.tksociete/affaire.dat"
+	set myaffair [db1 eval { UPDATE affaires SET "societe" = $a,"nom" = $b, "prenom" = $c, "adr1" = $d, "cp" = $e, "ville" = $f,\
+ "tel" = $g, "port" = $h, "fax" = $i, "email" = $j WHERE "id" = $myid}]
+	db1 close
+	destroy .n.o2
+}
+
+# Delete selected affair in treeview affair in fmaffair
+proc Adel { myid } {
+	sqlite3 db1 "$::env(HOME)/.tksociete/affaire.dat"
+	set mescontacts [db1 eval { DELETE FROM affaires WHERE id = $myid }]
+	tk_messageBox -type ok -icon info -title Information -message "Affaire effacé avec succès!"
+	db1 close
+	destroy .n.o3
+}
+
+
